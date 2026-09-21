@@ -1,0 +1,13 @@
+# Lokale SQLite-Datenbank
+storage/database/*.sqlite
+storage/database/*.sqlite-*
+
+# Hochgeladene Bewerbungsunterlagen
+storage/uploads/*
+!storage/uploads/.gitkeep
+
+# Betriebssystem- und Editor-Dateien
+.DS_Store
+Thumbs.db
+.vscode/
+
