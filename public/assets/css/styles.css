@@ -175,6 +175,12 @@ h3 {
     border-color: var(--error-border);
 }
 
+.job-detail > .notice h1 {
+    margin-bottom: 0.75rem;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    line-height: 1.2;
+}
+
 .job-detail {
     padding-top: 2rem;
 }

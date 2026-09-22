@@ -47,7 +47,9 @@ require __DIR__ . '/includes/header.php';
     <section class="jobs" aria-labelledby="jobs-heading">
         <div class="section-heading">
             <h2 id="jobs-heading">Offene Stellen</h2>
-            <span><?= count($jobs) ?> Angebote</span>
+            <?php if (!$databaseError): ?>
+                <span><?= count($jobs) ?> Angebote</span>
+            <?php endif; ?>
         </div>
 
         <?php if ($databaseError): ?>

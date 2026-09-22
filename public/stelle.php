@@ -43,10 +43,6 @@ if ($databaseError) {
     $pageTitle = 'Stelle nicht gefunden | FiktivFit Karriere';
 }
 
-$pageTitle = $job
-    ? $job['titel'] . ' | FiktivFit Karriere'
-    : 'Stelle nicht gefunden | FiktivFit Karriere';
-
 $headerLinkHref = $job
     ? 'anmelden.php?from=job&id=' . (int) $job['id']
     : 'anmelden.php?from=overview';
