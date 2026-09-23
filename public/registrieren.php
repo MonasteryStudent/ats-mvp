@@ -225,7 +225,7 @@ require __DIR__ . '/includes/header.php';
             </div>
         <?php endif; ?>
 
-        <form method="post" autocomplete="off" novalidate>
+        <form method="post" novalidate>
             <input
                 type="hidden"
                 name="csrf_token"
