@@ -1,6 +1,6 @@
 # ATS-MVP
 
-Minimum Viable Product eines Applicant-Tracking-Systems für ein fiktives Fitnessunternehmen.
+Minimum Viable Product eines Applicant-Tracking-Systems für ein fiktives Fitnessunternehmen. Der ATS-MVP wird im Rahmen eines Hochschulprojekts entwickelt und befindet sich derzeit im Aufbau. Er dient ausschließlich zu Lehr- und Demonstrationszwecken und ist nicht für den produktiven Einsatz oder die Verarbeitung echter personenbezogener Daten vorgesehen.
 
 ## Technischer Rahmen
 
