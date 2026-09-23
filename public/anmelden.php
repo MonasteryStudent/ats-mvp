@@ -5,6 +5,10 @@ declare(strict_types=1);
 $from = filter_input(INPUT_GET, 'from');
 $returnJobId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 
+$registrationSuccessful = (
+    filter_input(INPUT_GET, 'registered') === '1'
+);
+
 $pageTitle = 'Anmelden | FiktivFit Karriere';
 $headerLinkLabel = 'Zur Stellenübersicht';
 $headerLinkHref = 'index.php';
@@ -36,6 +40,12 @@ require __DIR__ . '/includes/header.php';
         </p>
 
         <form method="post">
+            <?php if ($registrationSuccessful): ?>
+                <div class="notice notice--success" role="status">
+                    <strong>Dein Konto wurde erfolgreich angelegt.</strong>
+                    <p>Du kannst dich jetzt mit deinen Zugangsdaten anmelden.</p>
+                </div>
+            <?php endif; ?>
             <div class="form-field">
                 <label for="email">E-Mail-Adresse</label>
                 <input

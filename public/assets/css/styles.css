@@ -8,6 +8,8 @@
     --border: #dce2e5;
     --error-background: #fff1f0;
     --error-border: #e8aaa6;
+    --success-background: #edf8f3;
+    --success-border: #8fcbb8;
     --shadow: 0 12px 34px rgba(23, 33, 38, 0.08);
 }
 
@@ -175,6 +177,15 @@ h3 {
     border-color: var(--error-border);
 }
 
+.notice--success {
+    background: var(--success-background);
+    border-color: var(--success-border);
+}
+
+.notice--success p {
+    margin-bottom: 0;
+}
+
 .job-detail > .notice h1 {
     margin-bottom: 0.75rem;
     font-size: clamp(1.5rem, 3vw, 2rem);
@@ -313,6 +324,15 @@ h3 {
 
 .auth-card > p:not(.eyebrow) {
     color: var(--muted);
+}
+
+.form-errors {
+    margin-top: 1.5rem;
+}
+
+.form-errors ul {
+    margin: 0.75rem 0 0;
+    padding-left: 1.25rem;
 }
 
 .auth-card form {
