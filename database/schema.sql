@@ -42,16 +42,8 @@ CREATE TABLE IF NOT EXISTS bewerbungen (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     benutzerkonto_id INTEGER NOT NULL,
     stelle_id INTEGER NOT NULL,
-    akademischer_titel TEXT,
-    anrede TEXT,
-    geschlecht TEXT,
-    strasse TEXT,
-    hausnummer TEXT,
-    plz TEXT,
-    stadt TEXT,
-    land TEXT,
-    geburtsdatum TEXT,
-    staatsangehoerigkeit TEXT,
+    fruehestmoegliches_eintrittsdatum TEXT,
+    nachricht TEXT,
     status TEXT NOT NULL DEFAULT 'entwurf'
         CHECK (
             status IN (

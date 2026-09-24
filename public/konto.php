@@ -201,6 +201,7 @@ try {
     $applicationStatement = database()->prepare(
         'SELECT
             bewerbungen.id,
+            bewerbungen.stelle_id,
             bewerbungen.status,
             bewerbungen.eingereicht_am,
             stellen.kennziffer,
@@ -450,10 +451,12 @@ require __DIR__ . '/includes/header.php';
                                                 <?= escape($draft['arbeitsort']) ?>
                                             </td>
                                             <td>
-                                                <span class="hint">
-                                                    Weiterbearbeitung folgt mit dem
-                                                    Bewerbungsformular.
-                                                </span>
+                                                <a
+                                                    class="text-link"
+                                                    href="bewerbung.php?stelle_id=<?= (int) $draft['stelle_id'] ?>"
+                                                >
+                                                    Weiterbearbeiten
+                                                </a>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>

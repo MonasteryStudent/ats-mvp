@@ -350,7 +350,8 @@ h3 {
     font-weight: 700;
 }
 
-.form-field input {
+.form-field input,
+.form-field textarea {
     width: 100%;
     padding: 0.8rem 0.9rem;
     color: var(--text);
@@ -360,7 +361,8 @@ h3 {
     font: inherit;
 }
 
-.form-field input:focus {
+.form-field input:focus,
+.form-field textarea:focus {
     border-color: var(--primary);
     outline: 3px solid rgba(23, 107, 85, 0.18);
 }
@@ -515,6 +517,53 @@ h3 {
     margin-bottom: 1.5rem;
 }
 
+.application-form {
+    display: grid;
+    gap: 1.5rem;
+    max-width: 760px;
+}
+
+.application-form__section {
+    display: grid;
+    gap: 1.25rem;
+    padding: clamp(1.5rem, 4vw, 2rem);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+}
+
+.application-form__section h2 {
+    margin-bottom: 0;
+    font-size: 1.35rem;
+}
+
+.application-form__section > .hint {
+    margin: -0.5rem 0 0;
+}
+
+.application-form input[readonly] {
+    color: var(--muted);
+    background: var(--background);
+}
+
+.form-field textarea {
+    min-height: 10rem;
+    resize: vertical;
+}
+
+.application-form__actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.application-form__actions .button {
+    width: fit-content;
+    border: 0;
+    cursor: pointer;
+    font: inherit;
+}
+
 .table-wrapper {
     overflow-x: auto;
 }
@@ -621,5 +670,9 @@ h3 {
 
     .account-section__body {
         padding: 1.25rem;
+    }
+    
+    .application-form__actions .button {
+    width: 100%;
     }
 }
