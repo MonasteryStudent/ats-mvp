@@ -615,7 +615,7 @@ h3 {
         display: none;
     }
 
-        .account-profile-grid {
+    .account-profile-grid {
         grid-template-columns: 1fr;
     }
 

@@ -16,11 +16,6 @@ function escape(string $value): string
 
 startSession();
 
-if (userIsAuthenticated()) {
-    header('Location: konto.php');
-    exit;
-}
-
 $requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 $from = filter_input(INPUT_GET, 'from');
@@ -35,18 +30,34 @@ $pageTitle = 'Anmelden | FiktivFit Karriere';
 $headerLinkLabel = 'Zur Stellenübersicht';
 $headerLinkHref = 'index.php';
 $registrationHref = 'registrieren.php?from=overview';
+$redirectAfterLogin = 'konto.php';
 
 if (
-    $from === 'job'
-    && $returnJobId !== false
+    $returnJobId !== false
     && $returnJobId !== null
     && $returnJobId > 0
 ) {
-    $headerLinkLabel = 'Zur Stelle';
-    $headerLinkHref = 'stelle.php?id=' . $returnJobId;
-    $registrationHref = (
-        'registrieren.php?from=job&id=' . $returnJobId
-    );
+    if ($from === 'application') {
+        $headerLinkLabel = 'Zur Stelle';
+        $headerLinkHref = 'stelle.php?id=' . $returnJobId;
+        $registrationHref = (
+            'registrieren.php?from=application&id=' . $returnJobId
+        );
+        $redirectAfterLogin = (
+            'bewerbung.php?stelle_id=' . $returnJobId
+        );
+    } elseif ($from === 'job') {
+        $headerLinkLabel = 'Zur Stelle';
+        $headerLinkHref = 'stelle.php?id=' . $returnJobId;
+        $registrationHref = (
+            'registrieren.php?from=job&id=' . $returnJobId
+        );
+    }
+}
+
+if (userIsAuthenticated()) {
+    header('Location: ' . $redirectAfterLogin);
+    exit;
 }
 
 $email = '';
@@ -112,7 +123,7 @@ if ($requestMethod === 'POST') {
                     $user['rolle']
                 );
 
-                header('Location: konto.php');
+                header('Location: ' . $redirectAfterLogin);
                 exit;
             }
         } catch (Throwable $exception) {

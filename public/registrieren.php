@@ -22,12 +22,17 @@ $returnJobId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 $loginHref = 'anmelden.php?from=overview';
 
 if (
-    $from === 'job'
+    in_array($from, ['job', 'application'], true)
     && $returnJobId !== false
     && $returnJobId !== null
     && $returnJobId > 0
 ) {
-    $loginHref = 'anmelden.php?from=job&id=' . $returnJobId;
+    $loginHref = (
+        'anmelden.php?from='
+        . $from
+        . '&id='
+        . $returnJobId
+    );
 }
 
 $formData = [

@@ -104,8 +104,15 @@ require __DIR__ . '/includes/header.php';
             <aside class="application-card">
                 <h2>Interesse geweckt?</h2>
                 <p>Bewirb dich auf die Stelle <?= escape($job['titel']) ?>.</p>
-                <span class="button button--disabled" aria-disabled="true">Jetzt bewerben</span>
-                <p class="hint">Die Anmeldung und das Bewerbungsformular folgen im nächsten Entwicklungsschritt.</p>
+                <a
+                    class="button"
+                    href="bewerbung.php?stelle_id=<?= (int) $job['id'] ?>"
+                >
+                    Jetzt bewerben
+                </a>
+                <p class="hint">
+                    Für die Bewerbung ist ein Benutzerkonto erforderlich.
+                </p>
                 <hr>
                 <p><strong>Ansprechperson</strong><br><?= escape($job['ansprechperson_name']) ?><br><?= escape($job['ansprechperson_email']) ?></p>
             </aside>
