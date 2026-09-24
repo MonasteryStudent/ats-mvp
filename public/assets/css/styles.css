@@ -398,6 +398,162 @@ h3 {
     text-align: center;
 }
 
+.account-page {
+    padding: clamp(3rem, 8vw, 6rem) 0;
+}
+
+.account-intro {
+    max-width: 700px;
+    margin-bottom: 2.5rem;
+}
+
+.account-intro h1 {
+    font-size: clamp(2.25rem, 5vw, 3.5rem);
+}
+
+.account-intro > p:last-child,
+.empty-state {
+    color: var(--muted);
+}
+
+.account-sections {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.account-section {
+    overflow: hidden;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+}
+
+.account-section summary {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.1rem 1.25rem;
+    cursor: pointer;
+    font-weight: 700;
+    list-style: none;
+}
+
+.account-section summary::-webkit-details-marker {
+    display: none;
+}
+
+.account-section summary::before {
+    width: 0.65rem;
+    height: 0.65rem;
+    border-right: 2px solid var(--primary-dark);
+    border-bottom: 2px solid var(--primary-dark);
+    content: "";
+    transform: rotate(-45deg);
+    transition: transform 0.2s ease;
+}
+
+.account-section[open] summary::before {
+    transform: rotate(45deg);
+}
+
+.account-section summary:hover,
+.account-section summary:focus-visible {
+    color: var(--primary-dark);
+    background: #f8fbfa;
+}
+
+.account-section__body {
+    padding: 1.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.account-profile-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+.account-profile-grid input[readonly] {
+    color: var(--muted);
+    background: var(--background);
+}
+
+.empty-state {
+    margin-bottom: 0;
+}
+
+.account-logout {
+    width: min(100%, 180px);
+    margin-top: 1.5rem;
+}
+
+.account-logout .button {
+    border: 0;
+    cursor: pointer;
+    font: inherit;
+}
+
+.account-form {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.form-hint {
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+.button--fit {
+    width: fit-content;
+    border: 0;
+    cursor: pointer;
+    font: inherit;
+}
+
+.account-page > .notice {
+    margin-bottom: 1.5rem;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+}
+
+.account-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+}
+
+.account-table th,
+.account-table td {
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--border);
+    text-align: left;
+    vertical-align: top;
+}
+
+.account-table th {
+    background: var(--background);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.account-password-fields {
+    display: grid;
+    gap: 1.25rem;
+    max-width: 520px;
+}
+
+.account-form h2 {
+    margin-bottom: 0;
+    font-size: 1.25rem;
+}
+
+.account-section__body > .notice {
+    margin-bottom: 1.5rem;
+}
+
 .legal-page {
     max-width: 760px;
     padding: clamp(3rem, 8vw, 6rem) 0;
@@ -457,5 +613,13 @@ h3 {
 
     .site-footer__separator {
         display: none;
+    }
+
+        .account-profile-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .account-section__body {
+        padding: 1.25rem;
     }
 }
