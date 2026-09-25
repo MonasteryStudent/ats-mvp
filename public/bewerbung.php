@@ -20,8 +20,8 @@ function documentTypeLabel(string $documentType): string
     return match ($documentType) {
         'lebenslauf' => 'Lebenslauf',
         'anschreiben' => 'Anschreiben',
-        'zeugnis' => 'Zeugnis',
-        'anlage' => 'Weitere Anlage',
+        'zeugnis' => 'Zeugnisse',
+        'anlage' => 'Weitere Anlagen',
         default => 'Dokument',
     };
 }
@@ -57,6 +57,16 @@ $requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $draftSaved = (
     $requestMethod === 'GET'
     && filter_input(INPUT_GET, 'saved') === 'draft'
+);
+
+$documentRemoved = (
+    $requestMethod === 'GET'
+    && filter_input(INPUT_GET, 'removed') === '1'
+);
+
+$documentRemovalFailed = (
+    $requestMethod === 'GET'
+    && filter_input(INPUT_GET, 'removal_failed') === '1'
 );
 
 if (
@@ -557,6 +567,19 @@ require __DIR__ . '/includes/header.php';
                 </div>
             <?php endif; ?>
 
+            <?php if ($documentRemoved): ?>
+                <div class="notice notice--success" role="status">
+                    <strong>Das Dokument wurde entfernt.</strong>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($documentRemovalFailed): ?>
+                <div class="notice notice--error" role="alert">
+                    <strong>Das Dokument konnte nicht entfernt werden.</strong>
+                    <p>Bitte versuche es erneut.</p>
+                </div>
+            <?php endif; ?>
+
             <?php if ($errors !== []): ?>
                 <div
                     class="notice notice--error form-errors"
@@ -583,6 +606,12 @@ require __DIR__ . '/includes/header.php';
                     type="hidden"
                     name="csrf_token"
                     value="<?= escape(csrfToken()) ?>"
+                >
+
+                <input
+                    type="hidden"
+                    name="stelle_id"
+                    value="<?= (int) $job['id'] ?>"
                 >
 
                 <section class="application-form__section">
@@ -661,11 +690,26 @@ require __DIR__ . '/includes/header.php';
                                         </span>
                                     </div>
 
-                                    <span class="hint">
-                                        <?= escape(formatFileSize(
-                                            (int) $document['dateigroesse']
-                                        )) ?>
-                                    </span>
+                                    <div class="document-list__actions">
+                                        <span class="hint">
+                                            <?= escape(formatFileSize(
+                                                (int) $document['dateigroesse']
+                                            )) ?>
+                                        </span>
+
+                                        <button
+                                            class="document-list__remove"
+                                            type="submit"
+                                            name="dokument_id"
+                                            value="<?= (int) $document['id'] ?>"
+                                            formaction="dokument-loeschen.php"
+                                            formmethod="post"
+                                            formenctype="application/x-www-form-urlencoded"
+                                            formnovalidate
+                                        >
+                                            Entfernen
+                                        </button>
+                                    </div>
                                 </li>
                             <?php endforeach; ?>
                         </ul>

@@ -564,6 +564,53 @@ h3 {
     font: inherit;
 }
 
+.document-list {
+    display: grid;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.document-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.document-list li > div:first-child {
+    display: grid;
+    gap: 0.15rem;
+}
+
+.document-list__actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.document-list__remove {
+    padding: 0;
+    color: #9b2c2c;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+}
+
+.document-list__remove:hover,
+.document-list__remove:focus-visible {
+    color: #711f1f;
+}
+
 .table-wrapper {
     overflow-x: auto;
 }
