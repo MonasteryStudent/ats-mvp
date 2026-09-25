@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/config/database.php';
 require_once dirname(__DIR__) . '/config/auth.php';
+require_once dirname(__DIR__) . '/config/uploads.php';
 
 function escape(string $value): string
 {
@@ -12,6 +13,27 @@ function escape(string $value): string
         ENT_QUOTES | ENT_SUBSTITUTE,
         'UTF-8'
     );
+}
+
+function documentTypeLabel(string $documentType): string
+{
+    return match ($documentType) {
+        'lebenslauf' => 'Lebenslauf',
+        'anschreiben' => 'Anschreiben',
+        'zeugnis' => 'Zeugnis',
+        'anlage' => 'Weitere Anlage',
+        default => 'Dokument',
+    };
+}
+
+function formatFileSize(int $bytes): string
+{
+    return number_format(
+        $bytes / 1024,
+        0,
+        ',',
+        '.'
+    ) . ' KB';
 }
 
 $jobId = filter_input(
@@ -26,6 +48,7 @@ $application = null;
 $databaseError = false;
 $accessDenied = false;
 $errors = [];
+$documents = [];
 
 $earliestStartDate = '';
 $message = '';
@@ -140,6 +163,24 @@ if (
                 $message = (string) (
                     $application['nachricht'] ?? ''
                 );
+
+                $documentStatement = database()->prepare(
+                    'SELECT
+                        id,
+                        dokumenttyp,
+                        originaldateiname,
+                        speicherdateiname,
+                        dateigroesse
+                    FROM dokumente
+                    WHERE bewerbung_id = :bewerbung_id
+                    ORDER BY hochgeladen_am, id'
+                );
+
+                $documentStatement->execute([
+                    'bewerbung_id' => $application['id'],
+                ]);
+
+                $documents = $documentStatement->fetchAll();
             }
         }
 
@@ -193,66 +234,225 @@ if (
             }
 
             if ($errors === []) {
-                if ($application === null) {
-                    $saveStatement = database()->prepare(
-                        'INSERT INTO bewerbungen (
-                            benutzerkonto_id,
-                            stelle_id,
-                            fruehestmoegliches_eintrittsdatum,
-                            nachricht
-                        ) VALUES (
-                            :benutzerkonto_id,
-                            :stelle_id,
-                            :eintrittsdatum,
-                            :nachricht
-                        )'
-                    );
+                $connection = database();
+                $newStoredFiles = [];
+                $replacedStoredFiles = [];
 
-                    $saveStatement->execute([
-                        'benutzerkonto_id' =>
-                            authenticatedUserId(),
-                        'stelle_id' => $jobId,
-                        'eintrittsdatum' =>
-                            $earliestStartDate === ''
-                                ? null
-                                : $earliestStartDate,
-                        'nachricht' =>
-                            $message === '' ? null : $message,
-                    ]);
-                } else {
-                    $saveStatement = database()->prepare(
-                        'UPDATE bewerbungen
-                         SET
-                            fruehestmoegliches_eintrittsdatum =
+                $connection->beginTransaction();
+
+                try {
+                    if ($application === null) {
+                        $saveStatement = $connection->prepare(
+                            'INSERT INTO bewerbungen (
+                                benutzerkonto_id,
+                                stelle_id,
+                                fruehestmoegliches_eintrittsdatum,
+                                nachricht
+                            ) VALUES (
+                                :benutzerkonto_id,
+                                :stelle_id,
                                 :eintrittsdatum,
-                            nachricht = :nachricht,
-                            aktualisiert_am = CURRENT_TIMESTAMP
-                         WHERE id = :id
-                           AND benutzerkonto_id =
-                                :benutzerkonto_id
-                           AND status = :status'
+                                :nachricht
+                            )'
+                        );
+
+                        $saveStatement->execute([
+                            'benutzerkonto_id' =>
+                                authenticatedUserId(),
+                            'stelle_id' => $jobId,
+                            'eintrittsdatum' =>
+                                $earliestStartDate === ''
+                                    ? null
+                                    : $earliestStartDate,
+                            'nachricht' =>
+                                $message === '' ? null : $message,
+                        ]);
+
+                        $applicationId = (int) (
+                            $connection->lastInsertId()
+                        );
+                    } else {
+                        $applicationId = (int) $application['id'];
+
+                        $saveStatement = $connection->prepare(
+                            'UPDATE bewerbungen
+                            SET
+                                fruehestmoegliches_eintrittsdatum =
+                                    :eintrittsdatum,
+                                nachricht = :nachricht,
+                                aktualisiert_am = CURRENT_TIMESTAMP
+                            WHERE id = :id
+                            AND benutzerkonto_id = :benutzerkonto_id
+                            AND status = :status'
+                        );
+
+                        $saveStatement->execute([
+                            'eintrittsdatum' =>
+                                $earliestStartDate === ''
+                                    ? null
+                                    : $earliestStartDate,
+                            'nachricht' =>
+                                $message === '' ? null : $message,
+                            'id' => $applicationId,
+                            'benutzerkonto_id' =>
+                                authenticatedUserId(),
+                            'status' => 'entwurf',
+                        ]);
+                    }
+
+                    $uploadFields = [
+                        'lebenslauf' => [
+                            'type' => 'lebenslauf',
+                            'label' => 'Lebenslauf',
+                            'replace' => true,
+                        ],
+                        'anschreiben' => [
+                            'type' => 'anschreiben',
+                            'label' => 'Anschreiben',
+                            'replace' => true,
+                        ],
+                        'zeugnisse' => [
+                            'type' => 'zeugnis',
+                            'label' => 'Zeugnis',
+                            'replace' => true,
+                        ],
+                        'anlagen' => [
+                            'type' => 'anlage',
+                            'label' => 'Weitere Anlage',
+                            'replace' => true,
+                        ],
+                    ];
+
+                    foreach ($uploadFields as $fieldName => $configuration) {
+                        foreach (uploadedFiles($fieldName) as $uploadedFile) {
+                            try {
+                                $storedFile = storeUploadedPdf(
+                                    $uploadedFile
+                                );
+                            } catch (UploadValidationException $exception) {
+                                throw new UploadValidationException(
+                                    $configuration['label']
+                                    . ': '
+                                    . $exception->getMessage()
+                                );
+                            }
+
+                            $newStoredFiles[] =
+                                $storedFile['speicherdateiname'];
+
+                            if ($configuration['replace']) {
+                                $existingStatement = $connection->prepare(
+                                    'SELECT speicherdateiname
+                                    FROM dokumente
+                                    WHERE bewerbung_id = :bewerbung_id
+                                    AND dokumenttyp = :dokumenttyp'
+                                );
+
+                                $existingStatement->execute([
+                                    'bewerbung_id' => $applicationId,
+                                    'dokumenttyp' => $configuration['type'],
+                                ]);
+
+                                foreach (
+                                    $existingStatement->fetchAll()
+                                    as $existingDocument
+                                ) {
+                                    $replacedStoredFiles[] =
+                                        $existingDocument[
+                                            'speicherdateiname'
+                                        ];
+                                }
+
+                                $deleteStatement = $connection->prepare(
+                                    'DELETE FROM dokumente
+                                    WHERE bewerbung_id = :bewerbung_id
+                                    AND dokumenttyp = :dokumenttyp'
+                                );
+
+                                $deleteStatement->execute([
+                                    'bewerbung_id' => $applicationId,
+                                    'dokumenttyp' => $configuration['type'],
+                                ]);
+                            }
+
+                            $insertDocumentStatement =
+                                $connection->prepare(
+                                    'INSERT INTO dokumente (
+                                        bewerbung_id,
+                                        dokumenttyp,
+                                        originaldateiname,
+                                        speicherdateiname,
+                                        mime_typ,
+                                        dateigroesse
+                                    ) VALUES (
+                                        :bewerbung_id,
+                                        :dokumenttyp,
+                                        :originaldateiname,
+                                        :speicherdateiname,
+                                        :mime_typ,
+                                        :dateigroesse
+                                    )'
+                                );
+
+                            $insertDocumentStatement->execute([
+                                'bewerbung_id' => $applicationId,
+                                'dokumenttyp' => $configuration['type'],
+                                'originaldateiname' =>
+                                    $storedFile['originaldateiname'],
+                                'speicherdateiname' =>
+                                    $storedFile['speicherdateiname'],
+                                'mime_typ' => $storedFile['mime_typ'],
+                                'dateigroesse' =>
+                                    $storedFile['dateigroesse'],
+                            ]);
+                        }
+                    }
+
+                    $connection->commit();
+
+                    foreach ($replacedStoredFiles as $storedFilename) {
+                        $path = UPLOAD_PATH . '/' . $storedFilename;
+
+                        if (is_file($path)) {
+                            unlink($path);
+                        }
+                    }
+
+                    header(
+                        'Location: bewerbung.php?stelle_id='
+                        . $jobId
+                        . '&saved=draft'
                     );
+                    exit;
+                } catch (UploadValidationException $exception) {
+                    if ($connection->inTransaction()) {
+                        $connection->rollBack();
+                    }
 
-                    $saveStatement->execute([
-                        'eintrittsdatum' =>
-                            $earliestStartDate === ''
-                                ? null
-                                : $earliestStartDate,
-                        'nachricht' =>
-                            $message === '' ? null : $message,
-                        'id' => $application['id'],
-                        'benutzerkonto_id' =>
-                            authenticatedUserId(),
-                        'status' => 'entwurf',
-                    ]);
+                    foreach ($newStoredFiles as $storedFilename) {
+                        $path = UPLOAD_PATH . '/' . $storedFilename;
+
+                        if (is_file($path)) {
+                            unlink($path);
+                        }
+                    }
+
+                    $errors[] = $exception->getMessage();
+                } catch (Throwable $exception) {
+                    if ($connection->inTransaction()) {
+                        $connection->rollBack();
+                    }
+
+                    foreach ($newStoredFiles as $storedFilename) {
+                        $path = UPLOAD_PATH . '/' . $storedFilename;
+
+                        if (is_file($path)) {
+                            unlink($path);
+                        }
+                    }
+
+                    throw $exception;
                 }
-
-                header(
-                    'Location: bewerbung.php?stelle_id='
-                    . $jobId
-                    . '&saved=draft'
-                );
-                exit;
             }
         }
     } catch (Throwable $exception) {
@@ -374,7 +574,11 @@ require __DIR__ . '/includes/header.php';
                 </div>
             <?php endif; ?>
 
-            <form method="post" class="application-form">
+            <form
+                method="post"
+                enctype="multipart/form-data"
+                class="application-form"
+            >
                 <input
                     type="hidden"
                     name="csrf_token"
@@ -428,6 +632,100 @@ require __DIR__ . '/includes/header.php';
                     <a class="text-link" href="konto.php">
                         Profildaten im Konto bearbeiten
                     </a>
+                </section>
+
+                <section class="application-form__section">
+                    <h2>Bewerbungsunterlagen</h2>
+
+                    <p class="hint">
+                        Zulässig sind PDF-Dateien mit höchstens 5 MB pro Datei.
+                        Lebenslauf und Anschreiben sind vor dem Einreichen
+                        erforderlich.
+                    </p>
+
+                    <?php if ($documents !== []): ?>
+                        <ul class="document-list">
+                            <?php foreach ($documents as $document): ?>
+                                <li>
+                                    <div>
+                                        <strong>
+                                            <?= escape(documentTypeLabel(
+                                                $document['dokumenttyp']
+                                            )) ?>
+                                        </strong>
+
+                                        <span>
+                                            <?= escape(
+                                                $document['originaldateiname']
+                                            ) ?>
+                                        </span>
+                                    </div>
+
+                                    <span class="hint">
+                                        <?= escape(formatFileSize(
+                                            (int) $document['dateigroesse']
+                                        )) ?>
+                                    </span>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php endif; ?>
+
+                    <div class="form-field">
+                        <label for="resume">
+                            Lebenslauf
+                        </label>
+                        <input
+                            type="file"
+                            id="resume"
+                            name="lebenslauf"
+                            accept=".pdf,application/pdf"
+                        >
+                        <small class="form-hint">
+                            Eine neue Datei ersetzt den vorhandenen Lebenslauf.
+                        </small>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="cover-letter">
+                            Anschreiben
+                        </label>
+                        <input
+                            type="file"
+                            id="cover-letter"
+                            name="anschreiben"
+                            accept=".pdf,application/pdf"
+                        >
+                        <small class="form-hint">
+                            Eine neue Datei ersetzt das vorhandene Anschreiben.
+                        </small>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="certificates">
+                            Zeugnisse als zusammengefasste PDF
+                            <span class="hint">(optional)</span>
+                        </label>
+                        <input
+                            type="file"
+                            id="certificates"
+                            name="zeugnisse"
+                            accept=".pdf,application/pdf"
+                        >
+                    </div>
+
+                    <div class="form-field">
+                        <label for="attachments">
+                            Weitere Anlagen als zusammengefasste PDF
+                            <span class="hint">(optional)</span>
+                        </label>
+                        <input
+                            type="file"
+                            id="attachments"
+                            name="anlagen"
+                            accept=".pdf,application/pdf"
+                        >
+                    </div>
                 </section>
 
                 <section class="application-form__section">

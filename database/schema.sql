@@ -104,7 +104,6 @@ CREATE INDEX IF NOT EXISTS idx_bewerbungen_benutzerkonto
 CREATE INDEX IF NOT EXISTS idx_dokumente_bewerbung
     ON dokumente (bewerbung_id);
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_eindeutige_pflichtdokumente
-    ON dokumente (bewerbung_id, dokumenttyp)
-    WHERE dokumenttyp IN ('lebenslauf', 'anschreiben');
+CREATE UNIQUE INDEX IF NOT EXISTS idx_eindeutige_dokumenttypen
+    ON dokumente (bewerbung_id, dokumenttyp);
 
