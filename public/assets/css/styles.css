@@ -555,13 +555,22 @@ h3 {
 .application-form__actions {
     display: flex;
     justify-content: flex-end;
+    align-items: center;
+    gap: 1rem;
 }
 
 .application-form__actions .button {
-    width: fit-content;
+    width: auto;
+    min-width: 190px;
     border: 0;
     cursor: pointer;
     font: inherit;
+}
+
+.application-form__actions .button--secondary {
+    color: var(--primary-dark);
+    background: var(--surface);
+    box-shadow: inset 0 0 0 1px var(--primary);
 }
 
 .document-list {

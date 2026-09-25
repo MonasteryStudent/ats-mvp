@@ -54,6 +54,9 @@ $errors = [];
 $passwordErrors = [];
 $passwordSaved = filter_input(INPUT_GET, 'saved') === 'password';
 $profileSaved = filter_input(INPUT_GET, 'saved') === 'profile';
+$applicationSubmitted = (
+    filter_input(INPUT_GET, 'submitted') === '1'
+);
 
 try {
     $statement = database()->prepare(
@@ -263,6 +266,13 @@ require __DIR__ . '/includes/header.php';
         </div>
     <?php else: ?>
 
+        <?php if ($applicationSubmitted): ?>
+            <div class="notice notice--success" role="status">
+                <strong>Deine Bewerbung wurde erfolgreich eingereicht.</strong>
+                <p>Der aktuelle Status lautet „Eingegangen“.</p>
+            </div>
+        <?php endif; ?>
+
         <?php if ($profileSaved): ?>
             <div class="notice notice--success" role="status">
                 <strong>
@@ -369,7 +379,11 @@ require __DIR__ . '/includes/header.php';
                 </div>
             </details>
 
-            <details class="account-section" name="account-sections">
+            <details
+                class="account-section"
+                name="account-sections"
+                <?= $applicationSubmitted ? 'open' : '' ?>
+            >
                 <summary>Bewerbungen</summary>
 
                 <div class="account-section__body">

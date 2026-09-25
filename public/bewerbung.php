@@ -54,6 +54,13 @@ $earliestStartDate = '';
 $message = '';
 
 $requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$formAction = (string) ($_POST['action'] ?? 'save_draft');
+
+$submissionAttempted = (
+    $requestMethod === 'POST'
+    && $formAction === 'submit_application'
+);
+
 $draftSaved = (
     $requestMethod === 'GET'
     && filter_input(INPUT_GET, 'saved') === 'draft'
@@ -220,7 +227,24 @@ if (
                 );
             }
 
-            if ($earliestStartDate !== '') {
+            if (
+                !in_array(
+                    $formAction,
+                    ['save_draft', 'submit_application'],
+                    true
+                )
+            ) {
+                $errors[] = 'Die ausgewählte Aktion ist ungültig.';
+            }
+
+            if ($earliestStartDate === '') {
+                if ($submissionAttempted) {
+                    $errors[] = (
+                        'Das frühestmögliche Eintrittsdatum '
+                        . 'ist zum Einreichen erforderlich.'
+                    );
+                }
+            } else {
                 $date = DateTimeImmutable::createFromFormat(
                     '!Y-m-d',
                     $earliestStartDate
@@ -241,6 +265,35 @@ if (
                     'Die Nachricht darf höchstens '
                     . '2000 Zeichen enthalten.'
                 );
+            }
+
+            if ($submissionAttempted) {
+                $existingDocumentTypes = array_column(
+                    $documents,
+                    'dokumenttyp'
+                );
+
+                $hasResume = (
+                    in_array('lebenslauf', $existingDocumentTypes, true)
+                    || uploadedFiles('lebenslauf') !== []
+                );
+
+                $hasCoverLetter = (
+                    in_array('anschreiben', $existingDocumentTypes, true)
+                    || uploadedFiles('anschreiben') !== []
+                );
+
+                if (!$hasResume) {
+                    $errors[] = (
+                        'Ein Lebenslauf ist zum Einreichen erforderlich.'
+                    );
+                }
+
+                if (!$hasCoverLetter) {
+                    $errors[] = (
+                        'Ein Anschreiben ist zum Einreichen erforderlich.'
+                    );
+                }
             }
 
             if ($errors === []) {
@@ -418,6 +471,32 @@ if (
                         }
                     }
 
+                    if ($submissionAttempted) {
+                        $submitStatement = $connection->prepare(
+                            'UPDATE bewerbungen
+                            SET
+                                status = :neuer_status,
+                                eingereicht_am = CURRENT_TIMESTAMP,
+                                aktualisiert_am = CURRENT_TIMESTAMP
+                            WHERE id = :id
+                            AND benutzerkonto_id = :benutzerkonto_id
+                            AND status = :alter_status'
+                        );
+
+                        $submitStatement->execute([
+                            'neuer_status' => 'eingegangen',
+                            'id' => $applicationId,
+                            'benutzerkonto_id' => authenticatedUserId(),
+                            'alter_status' => 'entwurf',
+                        ]);
+
+                        if ($submitStatement->rowCount() !== 1) {
+                            throw new RuntimeException(
+                                'Die Bewerbung konnte nicht eingereicht werden.'
+                            );
+                        }
+                    }
+
                     $connection->commit();
 
                     foreach ($replacedStoredFiles as $storedFilename) {
@@ -428,11 +507,16 @@ if (
                         }
                     }
 
-                    header(
-                        'Location: bewerbung.php?stelle_id='
-                        . $jobId
-                        . '&saved=draft'
-                    );
+                    if ($submissionAttempted) {
+                        header('Location: konto.php?submitted=1');
+                    } else {
+                        header(
+                            'Location: bewerbung.php?stelle_id='
+                            . $jobId
+                            . '&saved=draft'
+                        );
+                    }
+
                     exit;
                 } catch (UploadValidationException $exception) {
                     if ($connection->inTransaction()) {
@@ -586,7 +670,11 @@ require __DIR__ . '/includes/header.php';
                     role="alert"
                 >
                     <strong>
-                        Der Entwurf konnte nicht gespeichert werden.
+                        <?php if ($submissionAttempted): ?>
+                            Die Bewerbung konnte nicht eingereicht werden.
+                        <?php else: ?>
+                            Der Entwurf konnte nicht gespeichert werden.
+                        <?php endif; ?>
                     </strong>
 
                     <ul>
@@ -802,8 +890,23 @@ require __DIR__ . '/includes/header.php';
                 </section>
 
                 <div class="application-form__actions">
-                    <button class="button" type="submit">
+                    <button
+                        class="button button--secondary"
+                        type="submit"
+                        name="action"
+                        value="save_draft"
+                        formnovalidate
+                    >
                         Als Entwurf speichern
+                    </button>
+
+                    <button
+                        class="button"
+                        type="submit"
+                        name="action"
+                        value="submit_application"
+                    >
+                        Bewerbung einreichen
                     </button>
                 </div>
             </form>
