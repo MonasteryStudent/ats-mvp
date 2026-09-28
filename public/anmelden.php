@@ -56,7 +56,13 @@ if (
 }
 
 if (userIsAuthenticated()) {
-    header('Location: ' . $redirectAfterLogin);
+    $authenticatedRole = (string) authenticatedUserRole();
+
+    $destination = $authenticatedRole === 'bewerbend'
+        ? $redirectAfterLogin
+        : startPageForRole($authenticatedRole);
+
+    header('Location: ' . $destination);
     exit;
 }
 
@@ -118,12 +124,18 @@ if ($requestMethod === 'POST') {
             } elseif ((int) $user['ist_aktiv'] !== 1) {
                 $errors[] = 'Dieses Benutzerkonto ist deaktiviert.';
             } else {
+                $role = (string) $user['rolle'];
+
                 signInUser(
                     (int) $user['id'],
-                    $user['rolle']
+                    $role
                 );
 
-                header('Location: ' . $redirectAfterLogin);
+                $destination = $role === 'bewerbend'
+                    ? $redirectAfterLogin
+                    : startPageForRole($role);
+
+                header('Location: ' . $destination);
                 exit;
             }
         } catch (Throwable $exception) {

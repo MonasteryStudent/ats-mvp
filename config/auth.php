@@ -51,6 +51,27 @@ function requireAuthentication(): void
     exit;
 }
 
+function startPageForRole(string $role): string
+{
+    return match ($role) {
+        'recruiting' => 'recruiting.php',
+        'admin' => 'index.php',
+        default => 'konto.php',
+    };
+}
+
+function requireRole(string $requiredRole): void
+{
+    requireAuthentication();
+
+    if (authenticatedUserRole() === $requiredRole) {
+        return;
+    }
+
+    http_response_code(403);
+    exit('Zugriff nicht erlaubt.');
+}
+
 function signOutUser(): void
 {
     startSession();

@@ -41,7 +41,7 @@ function formatDate(?string $value): string
         : date('d.m.Y', $timestamp);
 }
 
-requireAuthentication();
+requireRole('bewerbend');
 
 header('Cache-Control: no-store, no-cache, must-revalidate');
 
