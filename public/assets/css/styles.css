@@ -644,6 +644,50 @@ h3 {
     white-space: nowrap;
 }
 
+.recruiting-sections {
+    display: grid;
+    gap: 2rem;
+}
+
+.recruiting-section {
+    padding: clamp(1.25rem, 3vw, 2rem);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+}
+
+.recruiting-section__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.recruiting-section__header h2 {
+    margin-bottom: 0;
+    font-size: 1.5rem;
+}
+
+.status-label {
+    display: inline-flex;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.status-label--aktiv {
+    color: var(--primary-dark);
+    background: #e4f3ee;
+}
+
+.status-label--inaktiv {
+    color: var(--muted);
+    background: var(--background);
+}
+
 .account-password-fields {
     display: grid;
     gap: 1.25rem;
