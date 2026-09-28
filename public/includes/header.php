@@ -15,7 +15,7 @@ $headerLinkHref = $headerLinkHref ?? 'anmelden.php?from=overview';
         ENT_QUOTES | ENT_SUBSTITUTE,
         'UTF-8'
     ) ?></title>
-    <link rel="stylesheet" href="assets/css/styles.css?v=7">
+    <link rel="stylesheet" href="assets/css/styles.css?v=8">
 </head>
 <body>
     <header class="site-header">

@@ -48,6 +48,8 @@ header('Cache-Control: no-store, no-cache, must-revalidate');
 $jobs = [];
 $applications = [];
 $databaseError = false;
+$jobCreated = filter_input(INPUT_GET, 'saved') === 'created';
+$jobUpdated = filter_input(INPUT_GET, 'saved') === 'updated';
 
 try {
     $jobStatement = database()->query(
@@ -129,6 +131,16 @@ require __DIR__ . '/includes/header.php';
             <p>Bitte versuche es später erneut.</p>
         </div>
     <?php else: ?>
+        <?php if ($jobCreated): ?>
+            <div class="notice notice--success" role="status">
+                <strong>Die neue Stelle wurde angelegt.</strong>
+            </div>
+        <?php elseif ($jobUpdated): ?>
+            <div class="notice notice--success" role="status">
+                <strong>Die Änderungen wurden gespeichert.</strong>
+            </div>
+        <?php endif; ?>
+
         <div class="recruiting-sections">
             <section
                 class="recruiting-section"
