@@ -266,7 +266,7 @@ require __DIR__ . '/includes/header.php';
                                                 class="text-link"
                                                 href="bewerbung-sichten.php?id=<?= (int) $application['id'] ?>"
                                             >
-                                                Details anzeigen
+                                                Bearbeiten
                                             </a>
                                         </td>
                                     </tr>
