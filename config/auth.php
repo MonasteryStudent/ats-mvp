@@ -55,7 +55,7 @@ function startPageForRole(string $role): string
 {
     return match ($role) {
         'recruiting' => 'recruiting.php',
-        'admin' => 'index.php',
+        'admin' => 'admin.php',
         default => 'konto.php',
     };
 }

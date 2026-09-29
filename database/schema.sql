@@ -95,6 +95,10 @@ CREATE TABLE IF NOT EXISTS dokumente (
         ON DELETE CASCADE
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_einziges_administratorkonto
+    ON benutzerkonten (rolle)
+    WHERE rolle = 'admin';
+
 CREATE INDEX IF NOT EXISTS idx_bewerbungen_stelle_status
     ON bewerbungen (stelle_id, status);
 
