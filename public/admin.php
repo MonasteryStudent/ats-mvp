@@ -21,6 +21,11 @@ header('Cache-Control: no-store, no-cache, must-revalidate');
 $recruitingAccounts = [];
 $databaseError = false;
 
+$statusResult = filter_input(INPUT_GET, 'status');
+
+$accountActivated = $statusResult === 'activated';
+$accountDeactivated = $statusResult === 'deactivated';
+
 try {
     $statement = database()->prepare(
         'SELECT
@@ -78,6 +83,17 @@ require __DIR__ . '/includes/header.php';
             <p>Bitte versuche es später erneut.</p>
         </div>
     <?php else: ?>
+
+        <?php if ($accountActivated): ?>
+            <div class="notice notice--success" role="status">
+                <strong>Das Recruitingkonto wurde aktiviert.</strong>
+            </div>
+        <?php elseif ($accountDeactivated): ?>
+            <div class="notice notice--success" role="status">
+                <strong>Das Recruitingkonto wurde deaktiviert.</strong>
+            </div>
+        <?php endif; ?>
+
         <div class="recruiting-sections">
             <section
                 class="recruiting-section"
@@ -99,6 +115,7 @@ require __DIR__ . '/includes/header.php';
                                     <th scope="col">Name</th>
                                     <th scope="col">E-Mail-Adresse</th>
                                     <th scope="col">Kontostatus</th>
+                                    <th scope="col">Aktion</th>
                                 </tr>
                             </thead>
 
@@ -137,6 +154,45 @@ require __DIR__ . '/includes/header.php';
                                                     ? 'Aktiv'
                                                     : 'Inaktiv' ?>
                                             </span>
+                                        </td>
+
+                                        <td>
+                                            <form
+                                                class="account-table__action-form"
+                                                action="recruitingkonto-status.php"
+                                                method="post"
+                                            >
+                                                <input
+                                                    type="hidden"
+                                                    name="csrf_token"
+                                                    value="<?= escape(csrfToken()) ?>"
+                                                >
+
+                                                <input
+                                                    type="hidden"
+                                                    name="account_id"
+                                                    value="<?= (int) $account['id'] ?>"
+                                                >
+
+                                                <input
+                                                    type="hidden"
+                                                    name="action"
+                                                    value="<?= $isActive
+                                                        ? 'deactivate'
+                                                        : 'activate' ?>"
+                                                >
+
+                                                <button
+                                                    class="account-table__action<?= $isActive
+                                                        ? ' account-table__action--danger'
+                                                        : '' ?>"
+                                                    type="submit"
+                                                >
+                                                    <?= $isActive
+                                                        ? 'Deaktivieren'
+                                                        : 'Aktivieren' ?>
+                                                </button>
+                                            </form>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

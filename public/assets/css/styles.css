@@ -644,6 +644,36 @@ h3 {
     white-space: nowrap;
 }
 
+.account-table__action-form {
+    margin: 0;
+}
+
+.account-table__action {
+    padding: 0;
+    color: var(--primary-dark);
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+}
+
+.account-table__action:hover,
+.account-table__action:focus-visible {
+    color: var(--primary);
+}
+
+.account-table__action--danger {
+    color: #9b2c2c;
+}
+
+.account-table__action--danger:hover,
+.account-table__action--danger:focus-visible {
+    color: #711f1f;
+}
+
 .recruiting-sections {
     display: grid;
     gap: 2rem;
