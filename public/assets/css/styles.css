@@ -674,6 +674,20 @@ h3 {
     color: #711f1f;
 }
 
+.admin-account-form {
+    display: grid;
+    gap: 1.25rem;
+    max-width: 560px;
+}
+
+.admin-account-form .button {
+    width: fit-content;
+    justify-self: end;
+    border: 0;
+    cursor: pointer;
+    font: inherit;
+}
+
 .recruiting-sections {
     display: grid;
     gap: 2rem;
