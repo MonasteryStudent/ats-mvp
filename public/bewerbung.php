@@ -50,6 +50,39 @@ $accessDenied = false;
 $errors = [];
 $documents = [];
 
+$documentsByType = [];
+
+$documentFields = [
+    [
+        'type' => 'lebenslauf',
+        'name' => 'lebenslauf',
+        'id' => 'resume',
+        'label' => 'Lebenslauf',
+        'optional' => false,
+    ],
+    [
+        'type' => 'anschreiben',
+        'name' => 'anschreiben',
+        'id' => 'cover-letter',
+        'label' => 'Anschreiben',
+        'optional' => false,
+    ],
+    [
+        'type' => 'zeugnis',
+        'name' => 'zeugnisse',
+        'id' => 'certificates',
+        'label' => 'Zeugnisse als zusammengefasste PDF',
+        'optional' => true,
+    ],
+    [
+        'type' => 'anlage',
+        'name' => 'anlagen',
+        'id' => 'attachments',
+        'label' => 'Weitere Anlagen als zusammengefasste PDF',
+        'optional' => true,
+    ],
+];
+
 $earliestStartDate = '';
 $message = '';
 
@@ -560,6 +593,10 @@ if (
     }
 }
 
+foreach ($documents as $document) {
+    $documentsByType[$document['dokumenttyp']] = $document;
+}
+
 $headerLinkLabel = 'Mein Konto';
 
 if (userIsAuthenticated()) {
@@ -756,104 +793,62 @@ require __DIR__ . '/includes/header.php';
                         erforderlich.
                     </p>
 
-                    <?php if ($documents !== []): ?>
-                        <ul class="document-list">
-                            <?php foreach ($documents as $document): ?>
-                                <li>
-                                    <div>
+                    <?php foreach ($documentFields as $field): ?>
+                        <?php
+                        $existingDocument = (
+                            $documentsByType[$field['type']] ?? null
+                        );
+                        ?>
+
+                        <div class="form-field document-upload">
+                            <label for="<?= escape($field['id']) ?>">
+                                <?= escape($field['label']) ?>
+
+                                <?php if ($field['optional']): ?>
+                                    <span class="hint">(optional)</span>
+                                <?php endif; ?>
+                            </label>
+
+                            <?php if ($existingDocument !== null): ?>
+                                <div class="document-upload__saved">
+                                    <div class="document-upload__details">
                                         <strong>
-                                            <?= escape(documentTypeLabel(
-                                                $document['dokumenttyp']
-                                            )) ?>
+                                            <?= escape(
+                                                $existingDocument['originaldateiname']
+                                            ) ?>
                                         </strong>
 
-                                        <span>
-                                            <?= escape(
-                                                $document['originaldateiname']
-                                            ) ?>
-                                        </span>
-                                    </div>
-
-                                    <div class="document-list__actions">
-                                        <span class="hint">
+                                        <span class="form-hint">
+                                            Gespeichert ·
                                             <?= escape(formatFileSize(
-                                                (int) $document['dateigroesse']
+                                                (int) $existingDocument['dateigroesse']
                                             )) ?>
                                         </span>
-
-                                        <button
-                                            class="document-list__remove"
-                                            type="submit"
-                                            name="dokument_id"
-                                            value="<?= (int) $document['id'] ?>"
-                                            formaction="dokument-loeschen.php"
-                                            formmethod="post"
-                                            formenctype="application/x-www-form-urlencoded"
-                                            formnovalidate
-                                        >
-                                            Entfernen
-                                        </button>
                                     </div>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    <?php endif; ?>
 
-                    <div class="form-field">
-                        <label for="resume">
-                            Lebenslauf
-                        </label>
-                        <input
-                            type="file"
-                            id="resume"
-                            name="lebenslauf"
-                            accept=".pdf,application/pdf"
-                        >
-                        <small class="form-hint">
-                            Eine neue Datei ersetzt den vorhandenen Lebenslauf.
-                        </small>
-                    </div>
-
-                    <div class="form-field">
-                        <label for="cover-letter">
-                            Anschreiben
-                        </label>
-                        <input
-                            type="file"
-                            id="cover-letter"
-                            name="anschreiben"
-                            accept=".pdf,application/pdf"
-                        >
-                        <small class="form-hint">
-                            Eine neue Datei ersetzt das vorhandene Anschreiben.
-                        </small>
-                    </div>
-
-                    <div class="form-field">
-                        <label for="certificates">
-                            Zeugnisse als zusammengefasste PDF
-                            <span class="hint">(optional)</span>
-                        </label>
-                        <input
-                            type="file"
-                            id="certificates"
-                            name="zeugnisse"
-                            accept=".pdf,application/pdf"
-                        >
-                    </div>
-
-                    <div class="form-field">
-                        <label for="attachments">
-                            Weitere Anlagen als zusammengefasste PDF
-                            <span class="hint">(optional)</span>
-                        </label>
-                        <input
-                            type="file"
-                            id="attachments"
-                            name="anlagen"
-                            accept=".pdf,application/pdf"
-                        >
-                    </div>
+                                    <button
+                                        class="document-upload__remove"
+                                        type="submit"
+                                        name="dokument_id"
+                                        value="<?= (int) $existingDocument['id'] ?>"
+                                        formaction="dokument-loeschen.php"
+                                        formmethod="post"
+                                        formenctype="application/x-www-form-urlencoded"
+                                        formnovalidate
+                                    >
+                                        Entfernen
+                                    </button>
+                                </div>
+                            <?php else: ?>
+                                <input
+                                    type="file"
+                                    id="<?= escape($field['id']) ?>"
+                                    name="<?= escape($field['name']) ?>"
+                                    accept=".pdf,application/pdf"
+                                >
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
                 </section>
 
                 <section class="application-form__section">

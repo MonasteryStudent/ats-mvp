@@ -371,6 +371,49 @@ h3 {
     outline: 3px solid rgba(23, 107, 85, 0.18);
 }
 
+.document-upload input[type="file"] {
+    width: fit-content;
+    max-width: 100%;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    cursor: default;
+    pointer-events: none;
+}
+
+.document-upload input[type="file"]::file-selector-button {
+    margin-right: 0.75rem;
+    padding: 0.55rem 0.8rem;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    font: inherit;
+    pointer-events: auto;
+}
+
+.document-upload input[type="file"]::file-selector-button:hover {
+    color: var(--primary-dark);
+    border-color: var(--primary);
+}
+
+.document-upload input[type="file"]:focus {
+    border-color: transparent;
+    outline: none;
+}
+
+.document-upload input[type="file"]:focus-visible::file-selector-button {
+    outline: 3px solid rgba(23, 107, 85, 0.18);
+    outline-offset: 2px;
+}
+
+.document-upload > label {
+    cursor: default;
+    pointer-events: none;
+}
+
 .checkbox-field {
     display: flex;
     align-items: flex-start;
@@ -478,6 +521,7 @@ h3 {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.25rem;
+    align-items: start;
 }
 
 .account-profile-grid input[readonly] {
@@ -577,37 +621,33 @@ h3 {
     box-shadow: inset 0 0 0 1px var(--primary);
 }
 
-.document-list {
-    display: grid;
-    gap: 0.75rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
+.document-upload {
+    gap: 0.6rem;
 }
 
-.document-list li {
+.document-upload__saved {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    padding: 1rem;
+    padding: 0.85rem 1rem;
     background: var(--background);
     border: 1px solid var(--border);
     border-radius: 8px;
 }
 
-.document-list li > div:first-child {
+.document-upload__details {
     display: grid;
     gap: 0.15rem;
+    min-width: 0;
 }
 
-.document-list__actions {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
+.document-upload__details strong {
+    overflow-wrap: anywhere;
 }
 
-.document-list__remove {
+.document-upload__remove {
+    flex: 0 0 auto;
     padding: 0;
     color: #9b2c2c;
     background: transparent;
@@ -619,8 +659,8 @@ h3 {
     text-underline-offset: 0.2em;
 }
 
-.document-list__remove:hover,
-.document-list__remove:focus-visible {
+.document-upload__remove:hover,
+.document-upload__remove:focus-visible {
     color: #711f1f;
 }
 
@@ -868,5 +908,10 @@ h3 {
 
     .job-form__grid {
         grid-template-columns: 1fr;
+    }
+
+    .document-upload__saved {
+        align-items: flex-start;
+        flex-direction: column;
     }
 }

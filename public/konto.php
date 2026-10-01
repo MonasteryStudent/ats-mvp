@@ -344,7 +344,10 @@ require __DIR__ . '/includes/header.php';
                             </div>
 
                             <div class="form-field">
-                                <label for="phone">Telefonnummer</label>
+                                <label for="phone">
+                                    Telefonnummer
+                                    <span class="hint">(optional)</span>
+                                </label>
                                 <input
                                     type="tel"
                                     id="phone"

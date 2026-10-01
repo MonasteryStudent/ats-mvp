@@ -5,7 +5,6 @@ Minimum Viable Product eines Applicant-Tracking-Systems für ein fiktives Fitnes
 ## Technischer Rahmen
 
 - HTML und CSS für die Oberfläche
-- JavaScript für spätere clientseitige Interaktionen
 - PHP ohne Framework für die serverseitige Logik
 - SQLite als relationale Datenbank
 - XAMPP als lokale Entwicklungsumgebung
@@ -17,7 +16,7 @@ ats-mvp/
 ├── .htaccess           Beschränkung des Webzugriffs auf public/
 ├── config/             Konfiguration und Datenbankverbindung
 ├── database/           SQL-Schema und Beispieldaten
-├── public/             Öffentlich erreichbare PHP-, CSS- und JS-Dateien
+├── public/             Öffentlich erreichbare PHP- und CSS-Dateien
 ├── scripts/            Kommandozeilenskripte
 └── storage/            SQLite-Datenbank und hochgeladene Dateien
 ```
