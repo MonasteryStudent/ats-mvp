@@ -9,6 +9,22 @@ function escape(string $value): string
     return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
+function formatDate(?string $value): string
+{
+    if ($value === null || $value === '') {
+        return 'Nach Vereinbarung';
+    }
+
+    $date = DateTimeImmutable::createFromFormat(
+        '!Y-m-d',
+        $value
+    );
+
+    return $date === false
+        ? 'Nach Vereinbarung'
+        : $date->format('d.m.Y');
+}
+
 $jobId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 $job = null;
 $databaseError = false;
@@ -74,6 +90,22 @@ require __DIR__ . '/includes/header.php';
                 <li><?= escape($job['arbeitsort']) ?></li>
                 <li><?= escape($job['beschaeftigungsgrad']) ?></li>
                 <li><?= escape($job['befristung']) ?></li>
+                <li>
+                    <?= escape(
+                        $job['karrierestufe'] ?: 'Nicht angegeben'
+                    ) ?>
+                </li>
+                <li>
+                    Eintritt: <?= escape(formatDate(
+                        $job['eintrittsdatum']
+                    )) ?>
+                </li>
+                <li>
+                    Vergütung:
+                    <?= escape(
+                        $job['verguetung'] ?: 'Nach Vereinbarung'
+                    ) ?>
+                </li>
             </ul>
         </header>
 
