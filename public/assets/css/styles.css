@@ -177,6 +177,10 @@ h3 {
     border-color: var(--error-border);
 }
 
+.account-page > .notice h1 {
+    font-size: clamp(1.75rem, 3vw, 2.25rem);
+}
+
 .notice--success {
     background: var(--success-background);
     border-color: var(--success-border);

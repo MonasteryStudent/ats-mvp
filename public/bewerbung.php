@@ -560,18 +560,14 @@ if (
     }
 }
 
-if ($databaseError) {
-    $pageTitle = 'Technischer Fehler | FiktivFit Karriere';
-} elseif ($accessDenied) {
-    $pageTitle = 'Zugriff nicht erlaubt | FiktivFit Karriere';
-} elseif ($job) {
-    $pageTitle = 'Bewerbung | ' . $job['titel'];
-} else {
-    $pageTitle = 'Stelle nicht gefunden | FiktivFit Karriere';
-}
-
 $headerLinkLabel = 'Mein Konto';
-$headerLinkHref = 'konto.php';
+
+if (userIsAuthenticated()) {
+    $userRole = (string) authenticatedUserRole();
+    $headerLinkHref = startPageForRole($userRole);
+} else {
+    $headerLinkHref = 'anmelden.php?from=overview';
+}
 
 require __DIR__ . '/includes/header.php';
 
