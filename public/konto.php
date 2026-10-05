@@ -57,6 +57,7 @@ $profileSaved = filter_input(INPUT_GET, 'saved') === 'profile';
 $applicationSubmitted = (
     filter_input(INPUT_GET, 'submitted') === '1'
 );
+$draftDeleted = filter_input(INPUT_GET, 'deleted') === 'draft';
 
 try {
     $statement = database()->prepare(
@@ -266,6 +267,14 @@ require __DIR__ . '/includes/header.php';
         </div>
     <?php else: ?>
 
+        <?php if ($draftDeleted): ?>
+            <div class="notice notice--success" role="status">
+                <strong>
+                    Der Bewerbungsentwurf und seine Unterlagen wurden gelöscht.
+                </strong>
+            </div>
+        <?php endif; ?>
+
         <?php if ($applicationSubmitted): ?>
             <div class="notice notice--success" role="status">
                 <strong>Deine Bewerbung wurde erfolgreich eingereicht.</strong>
@@ -473,6 +482,15 @@ require __DIR__ . '/includes/header.php';
                                                     href="bewerbung.php?stelle_id=<?= (int) $draft['stelle_id'] ?>"
                                                 >
                                                     Weiterbearbeiten
+                                                </a>
+
+                                                <span aria-hidden="true"> | </span>
+
+                                                <a
+                                                    class="text-link"
+                                                    href="entwurf-loeschen.php?id=<?= (int) $draft['id'] ?>"
+                                                >
+                                                    Löschen
                                                 </a>
                                             </td>
                                         </tr>

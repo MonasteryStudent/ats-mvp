@@ -326,6 +326,11 @@ h3 {
     font-size: clamp(2rem, 5vw, 3rem);
 }
 
+.auth-card--confirmation h1 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    line-height: 1.2;
+}
+
 .auth-card > p:not(.eyebrow) {
     color: var(--muted);
 }
@@ -716,6 +721,10 @@ h3 {
 .account-table__action--danger:hover,
 .account-table__action--danger:focus-visible {
     color: #711f1f;
+}
+
+.account-table .text-link {
+    display: inline-block;
 }
 
 .admin-account-form {
