@@ -182,6 +182,16 @@ if (
                     );
                 }
 
+                if (
+                    $application['status'] === 'zurueckgezogen'
+                    && $selectedStatus !== 'zurueckgezogen'
+                ) {
+                    $errors[] = (
+                        'Eine zurückgezogene Bewerbung kann nicht '
+                        . 'erneut in das Auswahlverfahren aufgenommen werden.'
+                    );
+                }
+
                 $rating = null;
 
                 if ($selectedRating !== '') {
@@ -217,7 +227,10 @@ if (
                     $updateStatement = database()->prepare(
                         "UPDATE bewerbungen
                          SET
-                            status = :status,
+                            status = CASE
+                                WHEN status = 'zurueckgezogen' THEN status
+                                ELSE :status
+                            END,
                             bewertung = :bewertung,
                             recruitingnotiz =
                                 :recruitingnotiz,

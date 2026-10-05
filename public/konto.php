@@ -57,6 +57,10 @@ $profileSaved = filter_input(INPUT_GET, 'saved') === 'profile';
 $applicationSubmitted = (
     filter_input(INPUT_GET, 'submitted') === '1'
 );
+$applicationWithdrawn = (
+    ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET'
+    && filter_input(INPUT_GET, 'withdrawn') === '1'
+);
 $draftDeleted = filter_input(INPUT_GET, 'deleted') === 'draft';
 
 try {
@@ -275,6 +279,12 @@ require __DIR__ . '/includes/header.php';
             </div>
         <?php endif; ?>
 
+        <?php if ($applicationWithdrawn): ?>
+            <div class="notice notice--success" role="status">
+                <strong>Deine Bewerbung wurde zurückgezogen.</strong>
+            </div>
+        <?php endif; ?>
+
         <?php if ($applicationSubmitted): ?>
             <div class="notice notice--success" role="status">
                 <strong>Deine Bewerbung wurde erfolgreich eingereicht.</strong>
@@ -394,7 +404,7 @@ require __DIR__ . '/includes/header.php';
             <details
                 class="account-section"
                 name="account-sections"
-                <?= $applicationSubmitted ? 'open' : '' ?>
+                <?= ($applicationSubmitted || $applicationWithdrawn) ? 'open' : '' ?>
             >
                 <summary>Bewerbungen</summary>
 
@@ -413,6 +423,7 @@ require __DIR__ . '/includes/header.php';
                                         <th scope="col">Arbeitsort</th>
                                         <th scope="col">Einreichungsdatum</th>
                                         <th scope="col">Status</th>
+                                        <th scope="col">Aktionen</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -437,6 +448,24 @@ require __DIR__ . '/includes/header.php';
                                                     $application['status']
                                                 )) ?>
                                             </td>
+
+                                            <td>
+                                                <?php if (in_array(
+                                                    $application['status'],
+                                                    ['eingegangen', 'vorauswahl', 'interview', 'angebot'],
+                                                    true
+                                                )): ?>
+                                                    <a
+                                                        class="text-link"
+                                                        href="bewerbung-zurueckziehen.php?id=<?= (int) $application['id'] ?>"
+                                                    >
+                                                        Zurückziehen
+                                                    </a>
+                                                <?php else: ?>
+                                                    –
+                                                <?php endif; ?>
+                                            </td>
+                                            </tr>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
