@@ -654,6 +654,25 @@ require __DIR__ . '/includes/header.php';
                     </div>
                 </form>
             </section>
+
+            <?php if ($application['status'] === 'zurueckgezogen'): ?>
+                <section class="recruiting-section recruiting-delete">
+                    <h2>Bewerbung löschen</h2>
+
+                    <p class="hint">
+                        Die Bewerbung wurde zurückgezogen. Vor einer
+                        Löschung ist zu prüfen, ob ein weiterer
+                        Aufbewahrungsgrund besteht.
+                    </p>
+
+                    <a
+                        class="text-link"
+                        href="bewerbung-loeschen.php?id=<?= (int) $application['id'] ?>"
+                    >
+                        Bewerbung endgültig löschen
+                    </a>
+                </section>
+            <?php endif; ?>
         </div>
 
         <form

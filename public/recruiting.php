@@ -50,6 +50,9 @@ $applications = [];
 $databaseError = false;
 $jobCreated = filter_input(INPUT_GET, 'saved') === 'created';
 $jobUpdated = filter_input(INPUT_GET, 'saved') === 'updated';
+$applicationDeleted = (
+    filter_input(INPUT_GET, 'deleted') === 'application'
+);
 
 try {
     $jobStatement = database()->query(
@@ -131,6 +134,14 @@ require __DIR__ . '/includes/header.php';
             <p>Bitte versuche es später erneut.</p>
         </div>
     <?php else: ?>
+        <?php if ($applicationDeleted): ?>
+            <div class="notice notice--success" role="status">
+                <strong>
+                    Die Bewerbung und ihre Unterlagen wurden gelöscht.
+                </strong>
+            </div>
+        <?php endif; ?>
+        
         <?php if ($jobCreated): ?>
             <div class="notice notice--success" role="status">
                 <strong>Die neue Stelle wurde angelegt.</strong>

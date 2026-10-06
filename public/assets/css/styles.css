@@ -747,6 +747,7 @@ h3 {
 }
 
 .recruiting-section {
+    min-width: 0;
     padding: clamp(1.25rem, 3vw, 2rem);
     background: var(--surface);
     border: 1px solid var(--border);
@@ -776,6 +777,14 @@ h3 {
 
 .recruiting-review-form .application-form__actions {
     margin-top: 0.75rem;
+}
+
+.recruiting-delete {
+    text-align: left;
+}
+
+.recruiting-delete .text-link {
+    display: inline-block;
 }
 
 .status-label {
