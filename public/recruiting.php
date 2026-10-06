@@ -287,6 +287,20 @@ require __DIR__ . '/includes/header.php';
                     </div>
                 <?php endif; ?>
             </section>
+
+            <section class="recruiting-section">
+                <h2>Kontolöschanträge</h2>
+                <p>
+                    Prüfe Löschanträge von Bewerbendenkonten
+                    mit bereits eingereichten Bewerbungen.
+                </p>
+                <a
+                    class="text-link"
+                    href="loeschantraege.php"
+                >
+                    Löschanträge anzeigen
+                </a>
+            </section>
         </div>
 
         <form

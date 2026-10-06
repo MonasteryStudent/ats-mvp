@@ -315,6 +315,11 @@ if ($databaseError) {
 $headerLinkLabel = 'Zur Recruitingübersicht';
 $headerLinkHref = 'recruiting.php';
 
+if (filter_input(INPUT_GET, 'from') === 'deletion_requests') {
+    $headerLinkLabel = 'Zur Übersicht der Löschanträge';
+    $headerLinkHref = 'loeschantraege.php';
+}
+
 require __DIR__ . '/includes/header.php';
 
 ?>
