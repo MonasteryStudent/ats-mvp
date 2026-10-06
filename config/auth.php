@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/session.php';
+require_once __DIR__ . '/database.php';
 
 function authenticatedUserId(): ?int
 {
@@ -26,12 +27,6 @@ function authenticatedUserRole(): ?string
         : null;
 }
 
-function userIsAuthenticated(): bool
-{
-    return authenticatedUserId() !== null
-        && authenticatedUserRole() !== null;
-}
-
 function signInUser(int $userId, string $role): void
 {
     startSession();
@@ -39,6 +34,61 @@ function signInUser(int $userId, string $role): void
 
     $_SESSION['user_id'] = $userId;
     $_SESSION['user_role'] = $role;
+}
+
+function userIsAuthenticated(): bool
+{
+    $userId = authenticatedUserId();
+    $sessionRole = authenticatedUserRole();
+
+    if ($userId === null || $sessionRole === null) {
+        return false;
+    }
+
+    try {
+        $statement = database()->prepare(
+            'SELECT rolle, ist_aktiv
+             FROM benutzerkonten
+             WHERE id = :id'
+        );
+
+        $statement->execute([
+            'id' => $userId,
+        ]);
+
+        $user = $statement->fetch();
+
+        if (
+            $user === false
+            || (int) $user['ist_aktiv'] !== 1
+            || $user['rolle'] !== $sessionRole
+        ) {
+            signOutUser();
+            return false;
+        }
+
+        return true;
+    } catch (Throwable $exception) {
+        error_log(
+            'Fehler bei der Sitzungsprüfung: '
+            . $exception->getMessage()
+        );
+
+        http_response_code(500);
+        exit(
+            'Der Zugang konnte nicht überprüft werden. '
+            . 'Bitte versuche es später erneut.'
+        );
+    }
+}
+
+function startPageForRole(string $role): string
+{
+    return match ($role) {
+        'recruiting' => 'recruiting.php',
+        'admin' => 'admin.php',
+        default => 'konto.php',
+    };
 }
 
 function requireAuthentication(): void
@@ -49,15 +99,6 @@ function requireAuthentication(): void
 
     header('Location: anmelden.php?from=overview');
     exit;
-}
-
-function startPageForRole(string $role): string
-{
-    return match ($role) {
-        'recruiting' => 'recruiting.php',
-        'admin' => 'admin.php',
-        default => 'konto.php',
-    };
 }
 
 function requireRole(string $requiredRole): void

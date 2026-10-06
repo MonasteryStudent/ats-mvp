@@ -26,6 +26,10 @@ $registrationSuccessful = (
     && filter_input(INPUT_GET, 'registered') === '1'
 );
 
+$deletionResult = $requestMethod === 'GET'
+    ? filter_input(INPUT_GET, 'deletion')
+    : null;
+
 $pageTitle = 'Anmelden | FiktivFit Karriere';
 $headerLinkLabel = 'Zur Stellenübersicht';
 $headerLinkHref = 'index.php';
@@ -167,6 +171,32 @@ require __DIR__ . '/includes/header.php';
             Melde dich an, um deine Bewerbungen zu verwalten und ihren
             aktuellen Status einzusehen.
         </p>
+
+        <?php if ($deletionResult === 'deleted'): ?>
+            <div class="notice notice--success" role="status">
+                <strong>
+                    Dein Konto und die zugehörigen Entwürfe
+                    und Unterlagen wurden gelöscht.
+                </strong>
+            </div>
+        <?php elseif ($deletionResult === 'requested'): ?>
+            <div class="notice notice--success" role="status">
+                <strong>Dein Löschantrag wurde gespeichert.</strong>
+                <p>
+                    Dein Kontozugang ist gesperrt.
+                    Das Recruiting prüft die Löschung deiner Daten.
+                </p>
+            </div>
+        <?php elseif ($deletionResult === 'cleanup_pending'): ?>
+            <div class="notice notice--error" role="alert">
+                <strong>Dein Konto wurde gelöscht.</strong>
+                <p>
+                    Einzelne Dateien konnten nicht entfernt werden.
+                    Bitte informiere die zuständige Stelle,
+                    damit die Löschung vervollständigt wird.
+                </p>
+            </div>
+        <?php endif; ?>
 
         <?php if ($registrationSuccessful): ?>
             <div class="notice notice--success" role="status">

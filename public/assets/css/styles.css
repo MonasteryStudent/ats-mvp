@@ -886,6 +886,12 @@ h3 {
     color: var(--primary);
 }
 
+.account-deletion {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+}
+
 @media (max-width: 720px) {
     .job-detail__layout {
         grid-template-columns: 1fr;

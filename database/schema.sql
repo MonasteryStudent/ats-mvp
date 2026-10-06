@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS benutzerkonten (
         CHECK (rolle IN ('bewerbend', 'recruiting', 'admin')),
     ist_aktiv INTEGER NOT NULL DEFAULT 1
         CHECK (ist_aktiv IN (0, 1)),
+    loeschung_angefordert_am TEXT,
     erstellt_am TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     aktualisiert_am TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

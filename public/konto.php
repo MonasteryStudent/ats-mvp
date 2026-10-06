@@ -626,6 +626,21 @@ require __DIR__ . '/includes/header.php';
                             Passwort ändern
                         </button>
                     </form>
+
+                    <section class="account-deletion">
+                        <h2>Kontolöschung</h2>
+                        <p>
+                            Du kannst dein Konto löschen oder bei
+                            vorhandenen eingereichten Bewerbungen
+                            eine Löschung anfordern.
+                        </p>
+                        <a
+                            class="text-link"
+                            href="konto-loeschen.php"
+                        >
+                            Kontolöschung
+                        </a>
+                    </section>
                 </div>
             </details>
         </div>
