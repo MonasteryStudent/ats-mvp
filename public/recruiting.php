@@ -50,6 +50,7 @@ $applications = [];
 $databaseError = false;
 $jobCreated = filter_input(INPUT_GET, 'saved') === 'created';
 $jobUpdated = filter_input(INPUT_GET, 'saved') === 'updated';
+$jobDeleted = filter_input(INPUT_GET, 'deleted') === 'job';
 $applicationDeleted = (
     filter_input(INPUT_GET, 'deleted') === 'application'
 );
@@ -150,6 +151,10 @@ require __DIR__ . '/includes/header.php';
             <div class="notice notice--success" role="status">
                 <strong>Die Änderungen wurden gespeichert.</strong>
             </div>
+        <?php elseif ($jobDeleted): ?>
+            <div class="notice notice--success" role="status">
+                <strong>Die Stelle wurde gelöscht.</strong>
+            </div>
         <?php endif; ?>
 
         <div class="recruiting-sections">
@@ -212,6 +217,15 @@ require __DIR__ . '/includes/header.php';
                                                 href="stelle-verwalten.php?id=<?= (int) $job['id'] ?>"
                                             >
                                                 Bearbeiten
+                                            </a>
+
+                                            <br>
+
+                                            <a
+                                                class="account-table__action account-table__action--danger"
+                                                href="stelle-loeschen.php?id=<?= (int) $job['id'] ?>"
+                                            >
+                                                Löschen
                                             </a>
                                         </td>
                                     </tr>
