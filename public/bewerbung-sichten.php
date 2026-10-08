@@ -71,7 +71,6 @@ $statusOptions = [
     'interview' => 'Interview',
     'angebot' => 'Angebot',
     'abgelehnt' => 'Abgelehnt',
-    'zurueckgezogen' => 'Zurückgezogen',
 ];
 
 $ratingOptions = [
@@ -171,14 +170,11 @@ if (
                 }
 
                 if (
-                    !array_key_exists(
-                        $selectedStatus,
-                        $statusOptions
-                    )
+                    $application['status'] !== 'zurueckgezogen'
+                    && !array_key_exists($selectedStatus, $statusOptions)
                 ) {
                     $errors[] = (
-                        'Bitte wähle einen gültigen '
-                        . 'Bewerbungsstatus aus.'
+                        'Bitte wähle einen gültigen Bewerbungsstatus aus.'
                     );
                 }
 
@@ -582,25 +578,37 @@ require __DIR__ . '/includes/header.php';
                                 Bewerbungsstatus
                             </label>
 
-                            <select
-                                id="status"
-                                name="status"
-                                required
-                            >
-                                <?php foreach (
-                                    $statusOptions
-                                    as $value => $label
-                                ): ?>
-                                    <option
-                                        value="<?= escape($value) ?>"
-                                        <?= $selectedStatus === $value
-                                            ? 'selected'
-                                            : '' ?>
-                                    >
-                                        <?= escape($label) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+                            <?php if ($application['status'] === 'zurueckgezogen'): ?>
+                                <input
+                                    type="text"
+                                    id="status"
+                                    value="Zurückgezogen"
+                                    readonly
+                                >
+
+                                <input
+                                    type="hidden"
+                                    name="status"
+                                    value="zurueckgezogen"
+                                >
+                            <?php else: ?>
+                                <select
+                                    id="status"
+                                    name="status"
+                                    required
+                                >
+                                    <?php foreach ($statusOptions as $value => $label): ?>
+                                        <option
+                                            value="<?= escape($value) ?>"
+                                            <?= $selectedStatus === $value
+                                                ? 'selected'
+                                                : '' ?>
+                                        >
+                                            <?= escape($label) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            <?php endif; ?>
                         </div>
 
                         <div class="form-field">
