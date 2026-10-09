@@ -105,6 +105,40 @@ try {
     http_response_code(500);
 }
 
+$ongoingApplications = [];
+$completedApplications = [];
+
+foreach ($applications as $application) {
+    if (
+        in_array(
+            $application['status'],
+            ['abgelehnt', 'zurueckgezogen'],
+            true
+        )
+    ) {
+        $completedApplications[] = $application;
+    } else {
+        $ongoingApplications[] = $application;
+    }
+}
+
+$applicationGroups = [
+    [
+        'id' => 'ongoing-applications',
+        'title' => 'Laufende Bewerbungen',
+        'applications' => $ongoingApplications,
+        'collapsible' => false,
+        'emptyMessage' => 'Es liegen keine laufenden Bewerbungen vor.',
+    ],
+    [
+        'id' => 'completed-applications',
+        'title' => 'Abgeschlossene Bewerbungen',
+        'applications' => $completedApplications,
+        'collapsible' => true,
+        'emptyMessage' => 'Es liegen keine abgeschlossenen Bewerbungen vor.',
+    ],
+];
+
 $pageTitle = 'Recruitingübersicht | FiktivFit Karriere';
 $headerLinkLabel = 'Stellenangebote';
 $headerLinkHref = 'index.php';
@@ -236,71 +270,95 @@ require __DIR__ . '/includes/header.php';
                 <?php endif; ?>
             </section>
 
-            <section
-                class="recruiting-section"
-                aria-labelledby="applications-heading"
-            >
-                <div class="recruiting-section__header">
-                    <h2 id="applications-heading">Bewerbungen</h2>
-                </div>
+            <?php foreach ($applicationGroups as $group): ?>
+                <section
+                    class="recruiting-section"
+                    aria-labelledby="<?= escape($group['id']) ?>-heading"
+                >
+                    <?php if ($group['collapsible']): ?>
+                        <details class="recruiting-archive">
+                            <summary>
+                                <h2 id="<?= escape($group['id']) ?>-heading">
+                                    <?= escape($group['title']) ?>
+                                    (<?= count($group['applications']) ?>)
+                                </h2>
+                            </summary>
 
-                <?php if ($applications === []): ?>
-                    <p class="empty-state">
-                        Es liegen noch keine eingereichten Bewerbungen vor.
-                    </p>
-                <?php else: ?>
-                    <div class="table-wrapper">
-                        <table class="account-table">
-                            <thead>
-                                <tr>
-                                    <th scope="col">Stellenbezeichnung</th>
-                                    <th scope="col">
-                                        Name der bewerbenden Person
-                                    </th>
-                                    <th scope="col">Einreichungsdatum</th>
-                                    <th scope="col">Status</th>
-                                    <th scope="col">Aktion</th>
-                                </tr>
-                            </thead>
+                            <div class="recruiting-archive__body">
+                    <?php else: ?>
+                        <div class="recruiting-section__header">
+                            <h2 id="<?= escape($group['id']) ?>-heading">
+                                <?= escape($group['title']) ?>
+                                (<?= count($group['applications']) ?>)
+                            </h2>
+                        </div>
+                    <?php endif; ?>
 
-                            <tbody>
-                                <?php foreach ($applications as $application): ?>
+                    <?php if ($group['applications'] === []): ?>
+                        <p class="empty-state">
+                            <?= escape($group['emptyMessage']) ?>
+                        </p>
+                    <?php else: ?>
+                        <div class="table-wrapper">
+                            <table class="account-table">
+                                <thead>
                                     <tr>
-                                        <td>
-                                            <?= escape($application['titel']) ?>
-                                        </td>
-                                        <td>
-                                            <?= escape(
-                                                $application['vorname']
-                                                . ' '
-                                                . $application['nachname']
-                                            ) ?>
-                                        </td>
-                                        <td>
-                                            <?= escape(formatDate(
-                                                $application['eingereicht_am']
-                                            )) ?>
-                                        </td>
-                                        <td>
-                                            <?= escape(statusLabel(
-                                                $application['status']
-                                            )) ?>
-                                        </td>
-                                        <td>
-                                            <a
-                                                class="text-link"
-                                                href="bewerbung-sichten.php?id=<?= (int) $application['id'] ?>"
-                                            >
-                                                Bearbeiten
-                                            </a>
-                                        </td>
+                                        <th scope="col">Stellenbezeichnung</th>
+                                        <th scope="col">
+                                            Name der bewerbenden Person
+                                        </th>
+                                        <th scope="col">Einreichungsdatum</th>
+                                        <th scope="col">Status</th>
+                                        <th scope="col">Aktion</th>
                                     </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                <?php endif; ?>
-            </section>
+                                </thead>
+
+                                <tbody>
+                                    <?php foreach (
+                                        $group['applications'] as $application
+                                    ): ?>
+                                        <tr>
+                                            <td>
+                                                <?= escape($application['titel']) ?>
+                                            </td>
+                                            <td>
+                                                <?= escape(
+                                                    $application['vorname']
+                                                    . ' '
+                                                    . $application['nachname']
+                                                ) ?>
+                                            </td>
+                                            <td>
+                                                <?= escape(formatDate(
+                                                    $application['eingereicht_am']
+                                                )) ?>
+                                            </td>
+                                            <td>
+                                                <?= escape(statusLabel(
+                                                    $application['status']
+                                                )) ?>
+                                            </td>
+                                            <td>
+                                                <a
+                                                    class="text-link"
+                                                    href="bewerbung-sichten.php?id=<?= (int) $application['id'] ?>"
+                                                >
+                                                    Bearbeiten
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if ($group['collapsible']): ?>
+                            </div>
+                        </details>
+                    <?php endif; ?>
+                </section>
+            <?php endforeach; ?>
 
             <section class="recruiting-section">
                 <h2>Kontolöschanträge</h2>
