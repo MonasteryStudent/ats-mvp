@@ -28,3 +28,29 @@ function findApplicationsForUser(int $userId): array
 
     return $statement->fetchAll();
 }
+
+function findApplicationForUserAndJob(
+    int $userId,
+    int $jobId
+): ?array {
+    $statement = database()->prepare(
+        'SELECT
+            id,
+            status,
+            fruehestmoegliches_eintrittsdatum,
+            nachricht
+         FROM bewerbungen
+         WHERE benutzerkonto_id = :benutzerkonto_id
+           AND stelle_id = :stelle_id
+         LIMIT 1'
+    );
+
+    $statement->execute([
+        'benutzerkonto_id' => $userId,
+        'stelle_id' => $jobId,
+    ]);
+
+    $application = $statement->fetch();
+
+    return $application === false ? null : $application;
+}

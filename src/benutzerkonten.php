@@ -141,3 +141,28 @@ function updateUserPassword(
         'id' => $userId,
     ]);
 }
+
+function findActiveApplicantById(int $userId): ?array
+{
+    $statement = database()->prepare(
+        'SELECT
+            id,
+            email,
+            vorname,
+            nachname,
+            telefon
+         FROM benutzerkonten
+         WHERE id = :id
+           AND rolle = :rolle
+           AND ist_aktiv = 1'
+    );
+
+    $statement->execute([
+        'id' => $userId,
+        'rolle' => 'bewerbend',
+    ]);
+
+    $user = $statement->fetch();
+
+    return $user === false ? null : $user;
+}
