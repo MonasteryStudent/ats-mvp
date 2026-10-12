@@ -16,7 +16,6 @@ try {
         . $exception->getMessage()
     );
 
-    $jobs = [];
     $databaseError = true;
     http_response_code(500);
 }

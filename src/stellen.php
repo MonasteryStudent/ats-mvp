@@ -22,3 +22,20 @@ function findActiveJobs(): array
 
     return $statement->fetchAll();
 }
+
+function findActiveJobById(int $jobId): ?array
+{
+    $statement = database()->prepare(
+        "SELECT *
+         FROM stellen
+         WHERE id = :id AND status = 'aktiv'"
+    );
+
+    $statement->execute([
+        'id' => $jobId,
+    ]);
+
+    $job = $statement->fetch();
+
+    return $job === false ? null : $job;
+}

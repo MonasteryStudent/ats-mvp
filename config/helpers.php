@@ -59,3 +59,19 @@ function formatFileSize(int $bytes): string
         '.'
     ) . ' KB';
 }
+
+function formatJobStartDate(?string $value): string
+{
+    if ($value === null || $value === '') {
+        return 'Nach Vereinbarung';
+    }
+
+    $date = DateTimeImmutable::createFromFormat(
+        '!Y-m-d',
+        $value
+    );
+
+    return $date === false
+        ? 'Nach Vereinbarung'
+        : $date->format('d.m.Y');
+}
