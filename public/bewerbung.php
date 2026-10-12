@@ -249,64 +249,14 @@ if (
                 $connection->beginTransaction();
 
                 try {
-                    if ($application === null) {
-                        $saveStatement = $connection->prepare(
-                            'INSERT INTO bewerbungen (
-                                benutzerkonto_id,
-                                stelle_id,
-                                fruehestmoegliches_eintrittsdatum,
-                                nachricht
-                            ) VALUES (
-                                :benutzerkonto_id,
-                                :stelle_id,
-                                :eintrittsdatum,
-                                :nachricht
-                            )'
-                        );
-
-                        $saveStatement->execute([
-                            'benutzerkonto_id' =>
-                                authenticatedUserId(),
-                            'stelle_id' => $jobId,
-                            'eintrittsdatum' =>
-                                $earliestStartDate === ''
-                                    ? null
-                                    : $earliestStartDate,
-                            'nachricht' =>
-                                $message === '' ? null : $message,
-                        ]);
-
-                        $applicationId = (int) (
-                            $connection->lastInsertId()
-                        );
-                    } else {
-                        $applicationId = (int) $application['id'];
-
-                        $saveStatement = $connection->prepare(
-                            'UPDATE bewerbungen
-                            SET
-                                fruehestmoegliches_eintrittsdatum =
-                                    :eintrittsdatum,
-                                nachricht = :nachricht,
-                                aktualisiert_am = CURRENT_TIMESTAMP
-                            WHERE id = :id
-                            AND benutzerkonto_id = :benutzerkonto_id
-                            AND status = :status'
-                        );
-
-                        $saveStatement->execute([
-                            'eintrittsdatum' =>
-                                $earliestStartDate === ''
-                                    ? null
-                                    : $earliestStartDate,
-                            'nachricht' =>
-                                $message === '' ? null : $message,
-                            'id' => $applicationId,
-                            'benutzerkonto_id' =>
-                                authenticatedUserId(),
-                            'status' => 'entwurf',
-                        ]);
-                    }
+                    $applicationId = saveApplicationDraft(
+                        $connection,
+                        $application === null ? null : (int) $application['id'],
+                        $userId,
+                        $jobId,
+                        $earliestStartDate,
+                        $message
+                    );
 
                     $uploadFields = [
                         'lebenslauf' => [
@@ -349,97 +299,31 @@ if (
                                 $storedFile['speicherdateiname'];
 
                             if ($configuration['replace']) {
-                                $existingStatement = $connection->prepare(
-                                    'SELECT speicherdateiname
-                                    FROM dokumente
-                                    WHERE bewerbung_id = :bewerbung_id
-                                    AND dokumenttyp = :dokumenttyp'
+                                $oldFilenames = replaceApplicationDocumentRecords(
+                                    $connection,
+                                    $applicationId,
+                                    $configuration['type']
                                 );
 
-                                $existingStatement->execute([
-                                    'bewerbung_id' => $applicationId,
-                                    'dokumenttyp' => $configuration['type'],
-                                ]);
-
-                                foreach (
-                                    $existingStatement->fetchAll()
-                                    as $existingDocument
-                                ) {
-                                    $replacedStoredFiles[] =
-                                        $existingDocument[
-                                            'speicherdateiname'
-                                        ];
+                                foreach ($oldFilenames as $storedFilename) {
+                                    $replacedStoredFiles[] = $storedFilename;
                                 }
-
-                                $deleteStatement = $connection->prepare(
-                                    'DELETE FROM dokumente
-                                    WHERE bewerbung_id = :bewerbung_id
-                                    AND dokumenttyp = :dokumenttyp'
-                                );
-
-                                $deleteStatement->execute([
-                                    'bewerbung_id' => $applicationId,
-                                    'dokumenttyp' => $configuration['type'],
-                                ]);
                             }
-
-                            $insertDocumentStatement =
-                                $connection->prepare(
-                                    'INSERT INTO dokumente (
-                                        bewerbung_id,
-                                        dokumenttyp,
-                                        originaldateiname,
-                                        speicherdateiname,
-                                        mime_typ,
-                                        dateigroesse
-                                    ) VALUES (
-                                        :bewerbung_id,
-                                        :dokumenttyp,
-                                        :originaldateiname,
-                                        :speicherdateiname,
-                                        :mime_typ,
-                                        :dateigroesse
-                                    )'
-                                );
-
-                            $insertDocumentStatement->execute([
-                                'bewerbung_id' => $applicationId,
-                                'dokumenttyp' => $configuration['type'],
-                                'originaldateiname' =>
-                                    $storedFile['originaldateiname'],
-                                'speicherdateiname' =>
-                                    $storedFile['speicherdateiname'],
-                                'mime_typ' => $storedFile['mime_typ'],
-                                'dateigroesse' =>
-                                    $storedFile['dateigroesse'],
-                            ]);
+                            insertApplicationDocument(
+                                $connection,
+                                $applicationId,
+                                $configuration['type'],
+                                $storedFile
+                            );
                         }
                     }
 
                     if ($submissionAttempted) {
-                        $submitStatement = $connection->prepare(
-                            'UPDATE bewerbungen
-                            SET
-                                status = :neuer_status,
-                                eingereicht_am = CURRENT_TIMESTAMP,
-                                aktualisiert_am = CURRENT_TIMESTAMP
-                            WHERE id = :id
-                            AND benutzerkonto_id = :benutzerkonto_id
-                            AND status = :alter_status'
+                        submitApplication(
+                            $connection,
+                            $applicationId,
+                            $userId
                         );
-
-                        $submitStatement->execute([
-                            'neuer_status' => 'eingegangen',
-                            'id' => $applicationId,
-                            'benutzerkonto_id' => authenticatedUserId(),
-                            'alter_status' => 'entwurf',
-                        ]);
-
-                        if ($submitStatement->rowCount() !== 1) {
-                            throw new RuntimeException(
-                                'Die Bewerbung konnte nicht eingereicht werden.'
-                            );
-                        }
                     }
 
                     $connection->commit();

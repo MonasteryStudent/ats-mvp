@@ -54,3 +54,96 @@ function findApplicationForUserAndJob(
 
     return $application === false ? null : $application;
 }
+
+function saveApplicationDraft(
+    PDO $connection,
+    ?int $applicationId,
+    int $userId,
+    int $jobId,
+    string $earliestStartDate,
+    string $message
+): int {
+    if ($applicationId === null) {
+        $statement = $connection->prepare(
+            'INSERT INTO bewerbungen (
+                benutzerkonto_id,
+                stelle_id,
+                fruehestmoegliches_eintrittsdatum,
+                nachricht
+            ) VALUES (
+                :benutzerkonto_id,
+                :stelle_id,
+                :eintrittsdatum,
+                :nachricht
+            )'
+        );
+
+        $statement->execute([
+            'benutzerkonto_id' => $userId,
+            'stelle_id' => $jobId,
+            'eintrittsdatum' => $earliestStartDate === ''
+                ? null
+                : $earliestStartDate,
+            'nachricht' => $message === '' ? null : $message,
+        ]);
+
+        return (int) $connection->lastInsertId();
+    }
+
+    $statement = $connection->prepare(
+        'UPDATE bewerbungen
+         SET fruehestmoegliches_eintrittsdatum = :eintrittsdatum,
+             nachricht = :nachricht,
+             aktualisiert_am = CURRENT_TIMESTAMP
+         WHERE id = :id
+           AND benutzerkonto_id = :benutzerkonto_id
+           AND status = :status'
+    );
+
+    $statement->execute([
+        'eintrittsdatum' => $earliestStartDate === ''
+            ? null
+            : $earliestStartDate,
+        'nachricht' => $message === '' ? null : $message,
+        'id' => $applicationId,
+        'benutzerkonto_id' => $userId,
+        'status' => 'entwurf',
+    ]);
+
+    if ($statement->rowCount() !== 1) {
+        throw new RuntimeException(
+            'Der Bewerbungsentwurf konnte nicht gespeichert werden.'
+        );
+    }
+
+    return $applicationId;
+}
+
+function submitApplication(
+    PDO $connection,
+    int $applicationId,
+    int $userId
+): void {
+    $statement = $connection->prepare(
+        'UPDATE bewerbungen
+         SET status = :neuer_status,
+             eingereicht_am = CURRENT_TIMESTAMP,
+             aktualisiert_am = CURRENT_TIMESTAMP
+         WHERE id = :id
+           AND benutzerkonto_id = :benutzerkonto_id
+           AND status = :alter_status'
+    );
+
+    $statement->execute([
+        'neuer_status' => 'eingegangen',
+        'id' => $applicationId,
+        'benutzerkonto_id' => $userId,
+        'alter_status' => 'entwurf',
+    ]);
+
+    if ($statement->rowCount() !== 1) {
+        throw new RuntimeException(
+            'Die Bewerbung konnte nicht eingereicht werden.'
+        );
+    }
+}
