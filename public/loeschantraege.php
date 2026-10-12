@@ -4,41 +4,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/config/database.php';
 require_once dirname(__DIR__) . '/config/auth.php';
-
-function escape(string $value): string
-{
-    return htmlspecialchars(
-        $value,
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
-
-function statusLabel(string $status): string
-{
-    return match ($status) {
-        'eingegangen' => 'Eingegangen',
-        'vorauswahl' => 'Vorauswahl',
-        'interview' => 'Interview',
-        'angebot' => 'Angebot',
-        'abgelehnt' => 'Abgelehnt',
-        'zurueckgezogen' => 'Zurückgezogen',
-        default => $status,
-    };
-}
-
-function formatDate(?string $value): string
-{
-    if ($value === null || $value === '') {
-        return '–';
-    }
-
-    $timestamp = strtotime($value);
-
-    return $timestamp === false
-        ? '–'
-        : date('d.m.Y', $timestamp);
-}
+require_once dirname(__DIR__) . '/config/helpers.php';
 
 requireRole('recruiting');
 

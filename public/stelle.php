@@ -3,13 +3,9 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/config/database.php';
+require_once dirname(__DIR__) . '/config/helpers.php';
 
-function escape(string $value): string
-{
-    return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-}
-
-function formatDate(?string $value): string
+function formatJobStartDate(?string $value): string
 {
     if ($value === null || $value === '') {
         return 'Nach Vereinbarung';
@@ -96,7 +92,7 @@ require __DIR__ . '/includes/header.php';
                     ) ?>
                 </li>
                 <li>
-                    Eintritt: <?= escape(formatDate(
+                    Eintritt: <?= escape(formatJobStartDate(
                         $job['eintrittsdatum']
                     )) ?>
                 </li>

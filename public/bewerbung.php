@@ -5,36 +5,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/config/database.php';
 require_once dirname(__DIR__) . '/config/auth.php';
 require_once dirname(__DIR__) . '/config/uploads.php';
-
-function escape(string $value): string
-{
-    return htmlspecialchars(
-        $value,
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-}
-
-function documentTypeLabel(string $documentType): string
-{
-    return match ($documentType) {
-        'lebenslauf' => 'Lebenslauf',
-        'anschreiben' => 'Anschreiben',
-        'zeugnis' => 'Zeugnisse',
-        'anlage' => 'Weitere Anlagen',
-        default => 'Dokument',
-    };
-}
-
-function formatFileSize(int $bytes): string
-{
-    return number_format(
-        $bytes / 1024,
-        0,
-        ',',
-        '.'
-    ) . ' KB';
-}
+require_once dirname(__DIR__) . '/config/helpers.php';
 
 $jobId = filter_input(
     INPUT_GET,
