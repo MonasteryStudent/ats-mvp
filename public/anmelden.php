@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-require_once dirname(__DIR__) . '/src/benutzerkonten.php';
+require_once dirname(__DIR__) . '/src/anmeldung.php';
 require_once dirname(__DIR__) . '/config/auth.php';
 require_once dirname(__DIR__) . '/config/helpers.php';
 
@@ -66,71 +66,24 @@ $email = '';
 $errors = [];
 
 if ($requestMethod === 'POST') {
-    $email = trim((string) ($_POST['email'] ?? ''));
-    $password = (string) ($_POST['password'] ?? '');
+    $result = processLogin($_POST);
 
-    if (!isValidCsrfToken($_POST['csrf_token'] ?? null)) {
-        $errors[] = (
-            'Die Anfrage ist abgelaufen. '
-            . 'Bitte lade die Seite neu und versuche es erneut.'
-        );
+    $email = $result['email'];
+    $errors = $result['errors'];
+
+    if ($result['technicalError']) {
+        http_response_code(500);
     }
 
-    if (
-        $email === ''
-        || filter_var($email, FILTER_VALIDATE_EMAIL) === false
-    ) {
-        $errors[] = 'Bitte gib eine gültige E-Mail-Adresse ein.';
-    }
+    if ($result['role'] !== null) {
+        $role = $result['role'];
 
-    if ($password === '') {
-        $errors[] = 'Bitte gib dein Passwort ein.';
-    }
+        $destination = $role === 'bewerbend'
+            ? $redirectAfterLogin
+            : startPageForRole($role);
 
-    if ($errors === []) {
-        try {
-            $user = findUserByEmail($email);
-
-            if (
-                $user === null
-                || !password_verify(
-                    $password,
-                    $user['passwort_hash']
-                )
-            ) {
-                $errors[] = (
-                    'E-Mail-Adresse oder Passwort ist nicht korrekt.'
-                );
-            } elseif ((int) $user['ist_aktiv'] !== 1) {
-                $errors[] = 'Dieses Benutzerkonto ist deaktiviert.';
-            } else {
-                $role = (string) $user['rolle'];
-
-                signInUser(
-                    (int) $user['id'],
-                    $role
-                );
-
-                $destination = $role === 'bewerbend'
-                    ? $redirectAfterLogin
-                    : startPageForRole($role);
-
-                header('Location: ' . $destination);
-                exit;
-            }
-        } catch (Throwable $exception) {
-            error_log(
-                'Fehler bei der Anmeldung: '
-                . $exception->getMessage()
-            );
-
-            $errors[] = (
-                'Die Anmeldung ist aus technischen Gründen '
-                . 'nicht möglich. Bitte versuche es erneut.'
-            );
-
-            http_response_code(500);
-        }
+        header('Location: ' . $destination);
+        exit;
     }
 }
 
