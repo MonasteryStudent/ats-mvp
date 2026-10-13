@@ -246,3 +246,54 @@ function findPendingAccountDeletionRequests(): array
 
     return $statement->fetchAll();
 }
+
+function findPendingAccountDeletionRequest(
+    PDO $connection,
+    int $accountId
+): ?array {
+    $statement = $connection->prepare(
+        'SELECT
+            id,
+            vorname,
+            nachname,
+            email
+         FROM benutzerkonten
+         WHERE id = :id
+           AND rolle = :rolle
+           AND ist_aktiv = 0
+           AND loeschung_angefordert_am IS NOT NULL'
+    );
+
+    $statement->execute([
+        'id' => $accountId,
+        'rolle' => 'bewerbend',
+    ]);
+
+    $account = $statement->fetch();
+
+    return $account === false ? null : $account;
+}
+
+function deleteAccountWithPendingDeletionRequest(
+    PDO $connection,
+    int $accountId
+): void {
+    $statement = $connection->prepare(
+        'DELETE FROM benutzerkonten
+         WHERE id = :id
+           AND rolle = :rolle
+           AND ist_aktiv = 0
+           AND loeschung_angefordert_am IS NOT NULL'
+    );
+
+    $statement->execute([
+        'id' => $accountId,
+        'rolle' => 'bewerbend',
+    ]);
+
+    if ($statement->rowCount() !== 1) {
+        throw new RuntimeException(
+            'Das Benutzerkonto konnte nicht gelöscht werden.'
+        );
+    }
+}
