@@ -334,3 +334,31 @@ function findSubmittedApplicationById(
 
     return $application === false ? null : $application;
 }
+
+function updateApplicationReview(
+    int $applicationId,
+    string $status,
+    ?int $rating,
+    ?string $note
+): void {
+    $statement = database()->prepare(
+        "UPDATE bewerbungen
+         SET
+            status = CASE
+                WHEN status = 'zurueckgezogen' THEN status
+                ELSE :status
+            END,
+            bewertung = :bewertung,
+            recruitingnotiz = :recruitingnotiz,
+            aktualisiert_am = CURRENT_TIMESTAMP
+         WHERE id = :id
+           AND status <> 'entwurf'"
+    );
+
+    $statement->execute([
+        'status' => $status,
+        'bewertung' => $rating,
+        'recruitingnotiz' => $note,
+        'id' => $applicationId,
+    ]);
+}

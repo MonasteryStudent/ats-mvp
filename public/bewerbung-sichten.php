@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-require_once dirname(__DIR__) . '/config/database.php';
 require_once dirname(__DIR__) . '/config/auth.php';
 require_once dirname(__DIR__) . '/config/helpers.php';
-require_once dirname(__DIR__) . '/src/bewerbungen.php';
+require_once dirname(__DIR__) . '/src/bewerbung-bewertung.php';
 require_once dirname(__DIR__) . '/src/dokumente.php';
 
 requireRole('recruiting');
@@ -20,21 +19,8 @@ $changesSaved = (
     && filter_input(INPUT_GET, 'saved') === '1'
 );
 
-$statusOptions = [
-    'eingegangen' => 'Eingegangen',
-    'vorauswahl' => 'Vorauswahl',
-    'interview' => 'Interview',
-    'angebot' => 'Angebot',
-    'abgelehnt' => 'Abgelehnt',
-];
-
-$ratingOptions = [
-    '1' => '1 – sehr gut',
-    '2' => '2 – gut',
-    '3' => '3 – befriedigend',
-    '4' => '4 – ausreichend',
-    '5' => '5 – unzureichend',
-];
+$statusOptions = recruitingStatusOptions();
+$ratingOptions = recruitingRatingOptions();
 
 $selectedStatus = '';
 $selectedRating = '';
@@ -60,7 +46,7 @@ if (
             $applicationId
         );
 
-        if ($application) {
+        if ($application !== null) {
             $selectedStatus = (string) $application['status'];
 
             $selectedRating = $application['bewertung'] === null
@@ -72,111 +58,32 @@ if (
             );
 
             if ($requestMethod === 'POST') {
-                $selectedStatus = trim(
-                    (string) ($_POST['status'] ?? '')
+                $processingResult = processApplicationReview(
+                    $application,
+                    $_POST
                 );
 
-                $selectedRating = trim(
-                    (string) ($_POST['bewertung'] ?? '')
+                $selectedStatus = (
+                    $processingResult['selectedStatus']
                 );
 
-                $recruitingNote = trim(
-                    (string) ($_POST['recruitingnotiz'] ?? '')
+                $selectedRating = (
+                    $processingResult['selectedRating']
                 );
 
-                if (
-                    !isValidCsrfToken(
-                        $_POST['csrf_token'] ?? null
-                    )
-                ) {
-                    $errors[] = (
-                        'Die Anfrage ist abgelaufen. '
-                        . 'Bitte lade die Seite neu und '
-                        . 'versuche es erneut.'
-                    );
-                }
+                $recruitingNote = (
+                    $processingResult['recruitingNote']
+                );
 
-                if (
-                    $application['status'] !== 'zurueckgezogen'
-                    && !array_key_exists($selectedStatus, $statusOptions)
-                ) {
-                    $errors[] = (
-                        'Bitte wähle einen gültigen Bewerbungsstatus aus.'
-                    );
-                }
+                $errors = $processingResult['errors'];
 
-                if (
-                    $application['status'] === 'zurueckgezogen'
-                    && $selectedStatus !== 'zurueckgezogen'
-                ) {
-                    $errors[] = (
-                        'Eine zurückgezogene Bewerbung kann nicht '
-                        . 'erneut in das Auswahlverfahren aufgenommen werden.'
-                    );
-                }
-
-                $rating = null;
-
-                if ($selectedRating !== '') {
-                    $validatedRating = filter_var(
-                        $selectedRating,
-                        FILTER_VALIDATE_INT,
-                        [
-                            'options' => [
-                                'min_range' => 1,
-                                'max_range' => 5,
-                            ],
-                        ]
-                    );
-
-                    if ($validatedRating === false) {
-                        $errors[] = (
-                            'Die Bewertung muss zwischen '
-                            . '1 und 5 liegen.'
-                        );
-                    } else {
-                        $rating = (int) $validatedRating;
-                    }
-                }
-
-                if (strlen($recruitingNote) > 5000) {
-                    $errors[] = (
-                        'Die interne Notiz darf höchstens '
-                        . '5000 Zeichen enthalten.'
-                    );
-                }
-
-                if ($errors === []) {
-                    $updateStatement = database()->prepare(
-                        "UPDATE bewerbungen
-                         SET
-                            status = CASE
-                                WHEN status = 'zurueckgezogen' THEN status
-                                ELSE :status
-                            END,
-                            bewertung = :bewertung,
-                            recruitingnotiz =
-                                :recruitingnotiz,
-                            aktualisiert_am =
-                                CURRENT_TIMESTAMP
-                         WHERE id = :id
-                         AND status <> 'entwurf'"
-                    );
-
-                    $updateStatement->execute([
-                        'status' => $selectedStatus,
-                        'bewertung' => $rating,
-                        'recruitingnotiz' =>
-                            $recruitingNote === ''
-                                ? null
-                                : $recruitingNote,
-                        'id' => $applicationId,
-                    ]);
-
+                if ($processingResult['saved']) {
                     header(
                         'Location: bewerbung-sichten.php?id='
                         . $applicationId
-                        . '&saved=1'
+                        . '&saved=1',
+                        true,
+                        303
                     );
                     exit;
                 }
@@ -198,22 +105,16 @@ if (
     }
 }
 
-if (!$databaseError && !$application) {
+if (!$databaseError && $application === null) {
     http_response_code(404);
 }
 
 if ($databaseError) {
-    $pageTitle = (
-        'Technischer Fehler | FiktivFit Karriere'
-    );
-} elseif ($application) {
-    $pageTitle = (
-        'Bewerbungsdetails | FiktivFit Karriere'
-    );
+    $pageTitle = 'Technischer Fehler | FiktivFit Karriere';
+} elseif ($application !== null) {
+    $pageTitle = 'Bewerbungsdetails | FiktivFit Karriere';
 } else {
-    $pageTitle = (
-        'Bewerbung nicht gefunden | FiktivFit Karriere'
-    );
+    $pageTitle = 'Bewerbung nicht gefunden | FiktivFit Karriere';
 }
 
 $headerLinkLabel = 'Zur Recruitingübersicht';
