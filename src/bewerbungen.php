@@ -411,3 +411,33 @@ function deleteWithdrawnApplication(
         );
     }
 }
+
+function findApplicationsForPendingDeletionRequests(): array
+{
+    $statement = database()->prepare(
+        'SELECT
+            bewerbungen.id,
+            bewerbungen.benutzerkonto_id,
+            bewerbungen.status,
+            bewerbungen.eingereicht_am,
+            stellen.titel,
+            stellen.kennziffer
+         FROM bewerbungen
+         INNER JOIN stellen
+             ON stellen.id = bewerbungen.stelle_id
+         INNER JOIN benutzerkonten
+             ON benutzerkonten.id = bewerbungen.benutzerkonto_id
+         WHERE benutzerkonten.rolle = :rolle
+           AND benutzerkonten.ist_aktiv = 0
+           AND benutzerkonten.loeschung_angefordert_am IS NOT NULL
+           AND bewerbungen.status <> :entwurfsstatus
+         ORDER BY bewerbungen.eingereicht_am, bewerbungen.id'
+    );
+
+    $statement->execute([
+        'rolle' => 'bewerbend',
+        'entwurfsstatus' => 'entwurf',
+    ]);
+
+    return $statement->fetchAll();
+}

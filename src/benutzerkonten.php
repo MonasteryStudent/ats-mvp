@@ -223,3 +223,26 @@ function deleteApplicantAccountWithoutSubmittedApplications(
         );
     }
 }
+
+function findPendingAccountDeletionRequests(): array
+{
+    $statement = database()->prepare(
+        'SELECT
+            id,
+            vorname,
+            nachname,
+            email,
+            loeschung_angefordert_am
+         FROM benutzerkonten
+         WHERE rolle = :rolle
+           AND ist_aktiv = 0
+           AND loeschung_angefordert_am IS NOT NULL
+         ORDER BY loeschung_angefordert_am, id'
+    );
+
+    $statement->execute([
+        'rolle' => 'bewerbend',
+    ]);
+
+    return $statement->fetchAll();
+}
