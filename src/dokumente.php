@@ -91,3 +91,20 @@ function insertApplicationDocument(
         'dateigroesse' => $storedFile['dateigroesse'],
     ]);
 }
+
+function findStoredFilenamesForApplication(
+    PDO $connection,
+    int $applicationId
+): array {
+    $statement = $connection->prepare(
+        'SELECT speicherdateiname
+         FROM dokumente
+         WHERE bewerbung_id = :id'
+    );
+
+    $statement->execute([
+        'id' => $applicationId,
+    ]);
+
+    return $statement->fetchAll(PDO::FETCH_COLUMN);
+}

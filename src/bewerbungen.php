@@ -202,3 +202,53 @@ function withdrawApplication(
 
     return $statement->rowCount() === 1;
 }
+
+function findOwnDraft(
+    PDO $connection,
+    int $draftId,
+    int $userId
+): ?array {
+    $statement = $connection->prepare(
+        'SELECT b.id, s.titel
+         FROM bewerbungen AS b
+         INNER JOIN stellen AS s ON s.id = b.stelle_id
+         WHERE b.id = :id
+           AND b.benutzerkonto_id = :benutzerkonto_id
+           AND b.status = :status'
+    );
+
+    $statement->execute([
+        'id' => $draftId,
+        'benutzerkonto_id' => $userId,
+        'status' => 'entwurf',
+    ]);
+
+    $draft = $statement->fetch();
+
+    return $draft === false ? null : $draft;
+}
+
+function deleteOwnDraft(
+    PDO $connection,
+    int $draftId,
+    int $userId
+): void {
+    $statement = $connection->prepare(
+        'DELETE FROM bewerbungen
+         WHERE id = :id
+           AND benutzerkonto_id = :benutzerkonto_id
+           AND status = :status'
+    );
+
+    $statement->execute([
+        'id' => $draftId,
+        'benutzerkonto_id' => $userId,
+        'status' => 'entwurf',
+    ]);
+
+    if ($statement->rowCount() !== 1) {
+        throw new RuntimeException(
+            'Der Entwurf konnte nicht gelöscht werden.'
+        );
+    }
+}
