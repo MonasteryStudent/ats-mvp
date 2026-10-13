@@ -60,3 +60,40 @@ function findJobsForRecruiting(): array
 
     return $statement->fetchAll();
 }
+
+function findJobById(int $jobId): ?array
+{
+    $statement = database()->prepare(
+        'SELECT *
+         FROM stellen
+         WHERE id = :id'
+    );
+
+    $statement->execute([
+        'id' => $jobId,
+    ]);
+
+    $job = $statement->fetch();
+
+    return $job === false ? null : $job;
+}
+
+function jobReferenceExists(
+    string $reference,
+    ?int $excludedJobId = null
+): bool {
+    $statement = database()->prepare(
+        'SELECT id
+         FROM stellen
+         WHERE kennziffer = :kennziffer
+           AND (:id IS NULL OR id <> :id)
+         LIMIT 1'
+    );
+
+    $statement->execute([
+        'kennziffer' => $reference,
+        'id' => $excludedJobId,
+    ]);
+
+    return $statement->fetch() !== false;
+}
