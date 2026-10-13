@@ -147,3 +147,58 @@ function submitApplication(
         );
     }
 }
+
+function findWithdrawableApplication(
+    int $applicationId,
+    int $userId
+): ?array {
+    $statement = database()->prepare(
+        "SELECT bewerbungen.id, stellen.titel
+         FROM bewerbungen
+         INNER JOIN stellen
+            ON stellen.id = bewerbungen.stelle_id
+         WHERE bewerbungen.id = :id
+           AND bewerbungen.benutzerkonto_id = :benutzerkonto_id
+           AND bewerbungen.status IN (
+               'eingegangen',
+               'vorauswahl',
+               'interview',
+               'angebot'
+           )"
+    );
+
+    $statement->execute([
+        'id' => $applicationId,
+        'benutzerkonto_id' => $userId,
+    ]);
+
+    $application = $statement->fetch();
+
+    return $application === false ? null : $application;
+}
+
+function withdrawApplication(
+    int $applicationId,
+    int $userId
+): bool {
+    $statement = database()->prepare(
+        "UPDATE bewerbungen
+         SET status = 'zurueckgezogen',
+             aktualisiert_am = CURRENT_TIMESTAMP
+         WHERE id = :id
+           AND benutzerkonto_id = :benutzerkonto_id
+           AND status IN (
+               'eingegangen',
+               'vorauswahl',
+               'interview',
+               'angebot'
+           )"
+    );
+
+    $statement->execute([
+        'id' => $applicationId,
+        'benutzerkonto_id' => $userId,
+    ]);
+
+    return $statement->rowCount() === 1;
+}
