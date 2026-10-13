@@ -166,3 +166,60 @@ function findActiveApplicantById(int $userId): ?array
 
     return $user === false ? null : $user;
 }
+
+function requestApplicantAccountDeletion(
+    PDO $connection,
+    int $userId
+): void {
+    $statement = $connection->prepare(
+        'UPDATE benutzerkonten
+         SET loeschung_angefordert_am = CURRENT_TIMESTAMP,
+             ist_aktiv = 0,
+             aktualisiert_am = CURRENT_TIMESTAMP
+         WHERE id = :id
+           AND rolle = :rolle
+           AND ist_aktiv = 1'
+    );
+
+    $statement->execute([
+        'id' => $userId,
+        'rolle' => 'bewerbend',
+    ]);
+
+    if ($statement->rowCount() !== 1) {
+        throw new RuntimeException(
+            'Der Löschantrag konnte nicht gespeichert werden.'
+        );
+    }
+}
+
+function deleteApplicantAccountWithoutSubmittedApplications(
+    PDO $connection,
+    int $userId
+): void {
+    $statement = $connection->prepare(
+        'DELETE FROM benutzerkonten
+         WHERE id = :id
+           AND rolle = :rolle
+           AND ist_aktiv = 1
+           AND NOT EXISTS (
+               SELECT 1
+               FROM bewerbungen
+               WHERE benutzerkonto_id = :bewerbungskonto_id
+                 AND status <> :entwurfsstatus
+           )'
+    );
+
+    $statement->execute([
+        'id' => $userId,
+        'rolle' => 'bewerbend',
+        'bewerbungskonto_id' => $userId,
+        'entwurfsstatus' => 'entwurf',
+    ]);
+
+    if ($statement->rowCount() !== 1) {
+        throw new RuntimeException(
+            'Das Benutzerkonto konnte nicht gelöscht werden.'
+        );
+    }
+}

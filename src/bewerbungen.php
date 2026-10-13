@@ -252,3 +252,22 @@ function deleteOwnDraft(
         );
     }
 }
+
+function userHasSubmittedApplications(
+    PDO $connection,
+    int $userId
+): bool {
+    $statement = $connection->prepare(
+        'SELECT COUNT(*)
+         FROM bewerbungen
+         WHERE benutzerkonto_id = :benutzerkonto_id
+           AND status <> :status'
+    );
+
+    $statement->execute([
+        'benutzerkonto_id' => $userId,
+        'status' => 'entwurf',
+    ]);
+
+    return (int) $statement->fetchColumn() > 0;
+}

@@ -164,3 +164,22 @@ function deleteApplicationDocumentRecord(
         );
     }
 }
+
+function findStoredFilenamesForUser(
+    PDO $connection,
+    int $userId
+): array {
+    $statement = $connection->prepare(
+        'SELECT d.speicherdateiname
+         FROM dokumente AS d
+         INNER JOIN bewerbungen AS b
+             ON b.id = d.bewerbung_id
+         WHERE b.benutzerkonto_id = :benutzerkonto_id'
+    );
+
+    $statement->execute([
+        'benutzerkonto_id' => $userId,
+    ]);
+
+    return $statement->fetchAll(PDO::FETCH_COLUMN);
+}

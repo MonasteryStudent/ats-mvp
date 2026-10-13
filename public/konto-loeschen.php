@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-require_once dirname(__DIR__) . '/config/database.php';
 require_once dirname(__DIR__) . '/config/auth.php';
 require_once dirname(__DIR__) . '/config/helpers.php';
+require_once dirname(__DIR__) . '/src/konto-loeschung.php';
 
 requireRole('bewerbend');
 
@@ -15,216 +15,79 @@ $requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 if (!in_array($requestMethod, ['GET', 'POST'], true)) {
     header('Allow: GET, POST');
     http_response_code(405);
+
     exit('Diese Anfrage ist nicht erlaubt.');
 }
 
 $userId = authenticatedUserId();
-$user = null;
 $errors = [];
 $databaseError = false;
 $hasSubmittedApplications = false;
-$storedFilenames = [];
+$deletionMode = 'delete';
 
 try {
-    $connection = database();
+    $user = $userId === null
+        ? null
+        : findActiveUserById($userId);
 
-    if ($requestMethod === 'POST') {
-        $connection->beginTransaction();
-    }
-
-    $userStatement = $connection->prepare(
-        'SELECT id, passwort_hash
-         FROM benutzerkonten
-         WHERE id = :id
-           AND rolle = :rolle
-           AND ist_aktiv = 1'
-    );
-
-    $userStatement->execute([
-        'id' => $userId,
-        'rolle' => 'bewerbend',
-    ]);
-
-    $user = $userStatement->fetch();
-
-    if ($user === false) {
-        if ($connection->inTransaction()) {
-            $connection->rollBack();
-        }
-
+    if ($user === null || $user['rolle'] !== 'bewerbend') {
         signOutUser();
 
-        header('Location: anmelden.php?from=overview', true, 303);
+        header(
+            'Location: anmelden.php?from=overview',
+            true,
+            303
+        );
         exit;
     }
 
-    $applicationStatement = $connection->prepare(
-        'SELECT COUNT(*)
-         FROM bewerbungen
-         WHERE benutzerkonto_id = :benutzerkonto_id
-           AND status <> :status'
-    );
-
-    $applicationStatement->execute([
-        'benutzerkonto_id' => $userId,
-        'status' => 'entwurf',
-    ]);
-
-    $hasSubmittedApplications = (
-        (int) $applicationStatement->fetchColumn() > 0
-    );
-
-    $deletionMode = $hasSubmittedApplications
-        ? 'request'
-        : 'delete';
-
     if ($requestMethod === 'POST') {
-        if (!isValidCsrfToken($_POST['csrf_token'] ?? null)) {
-            $errors[] = (
-                'Die Anfrage konnte nicht überprüft werden. '
-                . 'Bitte lade die Seite neu.'
-            );
+        $processingResult = processAccountDeletion(
+            $userId,
+            $_POST
+        );
 
-            http_response_code(403);
-        }
-
-        $password = (string) ($_POST['passwort'] ?? '');
-
-        if (!password_verify(
-            $password,
-            $user['passwort_hash']
-        )) {
-            $errors[] = 'Das aktuelle Passwort ist nicht korrekt.';
-        }
-
-        if (($_POST['deletion_mode'] ?? '') !== $deletionMode) {
-            $errors[] = (
-                'Der Bewerbungsstand hat sich geändert. '
-                . 'Bitte prüfe den Hinweis und bestätige erneut.'
-            );
-
-            http_response_code(409);
-        }
-
-        if ($errors === []) {
-            if ($hasSubmittedApplications) {
-                $updateStatement = $connection->prepare(
-                    'UPDATE benutzerkonten
-                     SET loeschung_angefordert_am = CURRENT_TIMESTAMP,
-                         ist_aktiv = 0,
-                         aktualisiert_am = CURRENT_TIMESTAMP
-                     WHERE id = :id
-                       AND rolle = :rolle
-                       AND ist_aktiv = 1'
-                );
-
-                $updateStatement->execute([
-                    'id' => $userId,
-                    'rolle' => 'bewerbend',
-                ]);
-
-                if ($updateStatement->rowCount() !== 1) {
-                    throw new RuntimeException(
-                        'Der Löschantrag konnte nicht gespeichert werden.'
-                    );
-                }
-
-                $result = 'requested';
-            } else {
-                $documentStatement = $connection->prepare(
-                    'SELECT dokumente.speicherdateiname
-                     FROM dokumente
-                     INNER JOIN bewerbungen
-                         ON bewerbungen.id = dokumente.bewerbung_id
-                     WHERE bewerbungen.benutzerkonto_id =
-                         :benutzerkonto_id'
-                );
-
-                $documentStatement->execute([
-                    'benutzerkonto_id' => $userId,
-                ]);
-
-                $storedFilenames = $documentStatement->fetchAll(
-                    PDO::FETCH_COLUMN
-                );
-
-                $deleteStatement = $connection->prepare(
-                    'DELETE FROM benutzerkonten
-                     WHERE id = :id
-                       AND rolle = :rolle
-                       AND ist_aktiv = 1
-                       AND NOT EXISTS (
-                           SELECT 1
-                           FROM bewerbungen
-                           WHERE benutzerkonto_id = :bewerbungskonto_id
-                             AND status <> :entwurfsstatus
-                       )'
-                );
-
-                $deleteStatement->execute([
-                    'id' => $userId,
-                    'rolle' => 'bewerbend',
-                    'bewerbungskonto_id' => $userId,
-                    'entwurfsstatus' => 'entwurf',
-                ]);
-
-                if ($deleteStatement->rowCount() !== 1) {
-                    throw new RuntimeException(
-                        'Das Benutzerkonto konnte nicht gelöscht werden.'
-                    );
-                }
-
-                $result = 'deleted';
-            }
-
-            $connection->commit();
+        if ($processingResult['accountMissing']) {
             signOutUser();
 
-            foreach ($storedFilenames as $storedFilename) {
-                if (
-                    $storedFilename === ''
-                    || basename($storedFilename) !== $storedFilename
-                ) {
-                    error_log(
-                        'Ungültiger Speicherdateiname bei Kontolöschung: '
-                        . $storedFilename
-                    );
-
-                    $result = 'cleanup_pending';
-                    continue;
-                }
-
-                $path = UPLOAD_PATH . '/' . $storedFilename;
-
-                if (is_file($path) && !unlink($path)) {
-                    error_log(
-                        'Datei konnte bei Kontolöschung nicht entfernt werden: '
-                        . $path
-                    );
-
-                    $result = 'cleanup_pending';
-                }
-            }
-
             header(
-                'Location: anmelden.php?from=overview&deletion='
-                . $result,
+                'Location: anmelden.php?from=overview',
                 true,
                 303
             );
             exit;
         }
 
-        $connection->rollBack();
-    }
-} catch (Throwable $exception) {
-    if (
-        isset($connection)
-        && $connection->inTransaction()
-    ) {
-        $connection->rollBack();
+        $hasSubmittedApplications = (
+            $processingResult['hasSubmittedApplications']
+        );
+
+        $errors = $processingResult['errors'];
+
+        http_response_code($processingResult['statusCode']);
+
+        if ($processingResult['result'] !== null) {
+            signOutUser();
+
+            header(
+                'Location: anmelden.php?from=overview&deletion='
+                . $processingResult['result'],
+                true,
+                303
+            );
+            exit;
+        }
+    } else {
+        $hasSubmittedApplications = userHasSubmittedApplications(
+            database(),
+            $userId
+        );
     }
 
+    $deletionMode = $hasSubmittedApplications
+        ? 'request'
+        : 'delete';
+} catch (Throwable $exception) {
     error_log(
         'Fehler bei der Kontolöschung: '
         . $exception->getMessage()
@@ -239,98 +102,5 @@ $headerLinkLabel = 'Mein Konto';
 $headerLinkHref = 'konto.php';
 
 require __DIR__ . '/includes/header.php';
-
-?>
-
-<main class="auth-page">
-    <section
-        class="auth-card auth-card--confirmation"
-        aria-labelledby="deletion-heading"
-    >
-        <p class="eyebrow">Kontoeinstellungen</p>
-        <h1 id="deletion-heading">Kontolöschung</h1>
-
-        <?php if ($databaseError): ?>
-            <div class="notice notice--error" role="alert">
-                <strong>
-                    Die Kontolöschung konnte nicht verarbeitet werden.
-                </strong>
-                <p>Bitte versuche es später erneut.</p>
-            </div>
-        <?php else: ?>
-            <?php if ($hasSubmittedApplications): ?>
-                <p>
-                    Es sind bereits eingereichte Bewerbungen vorhanden.
-                    Nach deiner Bestätigung wird dein Kontozugang
-                    gesperrt und du wirst abgemeldet.
-                </p>
-                <p>
-                    Das Recruiting prüft anschließend deinen Löschantrag
-                    und einen möglichen weiteren Aufbewahrungsbedarf
-                    deiner Bewerbungsdaten.
-                </p>
-            <?php else: ?>
-                <p>
-                    Dein Konto sowie vorhandene Bewerbungsentwürfe
-                    und ihre Unterlagen werden nach deiner Bestätigung
-                    endgültig gelöscht. Dieser Vorgang kann nicht
-                    rückgängig gemacht werden.
-                </p>
-            <?php endif; ?>
-
-            <?php if ($errors !== []): ?>
-                <div
-                    class="notice notice--error form-errors"
-                    role="alert"
-                >
-                    <ul>
-                        <?php foreach ($errors as $error): ?>
-                            <li><?= escape($error) ?></li>
-                        <?php endforeach; ?>
-                    </ul>
-                </div>
-            <?php endif; ?>
-
-            <form method="post">
-                <input
-                    type="hidden"
-                    name="csrf_token"
-                    value="<?= escape(csrfToken()) ?>"
-                >
-
-                <input
-                    type="hidden"
-                    name="deletion_mode"
-                    value="<?= escape($deletionMode) ?>"
-                >
-
-                <div class="form-field">
-                    <label for="deletion-password">
-                        Aktuelles Passwort zur Bestätigung
-                    </label>
-                    <input
-                        type="password"
-                        id="deletion-password"
-                        name="passwort"
-                        autocomplete="current-password"
-                        required
-                    >
-                </div>
-
-                <button class="button" type="submit">
-                    <?= $hasSubmittedApplications
-                        ? 'Kontolöschung anfordern'
-                        : 'Konto endgültig löschen' ?>
-                </button>
-            </form>
-        <?php endif; ?>
-
-        <p class="auth-card__footer">
-            <a class="text-link" href="konto.php">
-                Abbrechen und zurück zum Konto
-            </a>
-        </p>
-    </section>
-</main>
-
-<?php require __DIR__ . '/includes/footer.php'; ?>
+require dirname(__DIR__) . '/templates/konto-loeschen.php';
+require __DIR__ . '/includes/footer.php';
