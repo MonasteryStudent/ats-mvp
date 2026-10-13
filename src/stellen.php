@@ -39,3 +39,24 @@ function findActiveJobById(int $jobId): ?array
 
     return $job === false ? null : $job;
 }
+
+function findJobsForRecruiting(): array
+{
+    $statement = database()->query(
+        "SELECT
+            id,
+            titel,
+            kennziffer,
+            arbeitsort,
+            status
+         FROM stellen
+         ORDER BY
+            CASE status
+                WHEN 'aktiv' THEN 0
+                ELSE 1
+            END,
+            titel"
+    );
+
+    return $statement->fetchAll();
+}

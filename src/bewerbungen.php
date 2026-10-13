@@ -271,3 +271,28 @@ function userHasSubmittedApplications(
 
     return (int) $statement->fetchColumn() > 0;
 }
+
+function findSubmittedApplicationsForRecruiting(): array
+{
+    $statement = database()->query(
+        "SELECT
+            bewerbungen.id,
+            bewerbungen.status,
+            bewerbungen.eingereicht_am,
+            stellen.titel,
+            benutzerkonten.vorname,
+            benutzerkonten.nachname
+         FROM bewerbungen
+         INNER JOIN stellen
+            ON stellen.id = bewerbungen.stelle_id
+         INNER JOIN benutzerkonten
+            ON benutzerkonten.id =
+                bewerbungen.benutzerkonto_id
+         WHERE bewerbungen.status <> 'entwurf'
+         ORDER BY
+            bewerbungen.eingereicht_am DESC,
+            bewerbungen.id DESC"
+    );
+
+    return $statement->fetchAll();
+}
