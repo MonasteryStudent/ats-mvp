@@ -97,3 +97,76 @@ function jobReferenceExists(
 
     return $statement->fetch() !== false;
 }
+
+function saveJob(array $parameters, ?int $jobId = null): void
+{
+    if ($jobId !== null) {
+        $parameters['id'] = $jobId;
+
+        $statement = database()->prepare(
+            'UPDATE stellen
+             SET
+                titel = :titel,
+                kennziffer = :kennziffer,
+                arbeitsort = :arbeitsort,
+                eintrittsdatum = :eintrittsdatum,
+                karrierestufe = :karrierestufe,
+                beschaeftigungsgrad = :beschaeftigungsgrad,
+                befristung = :befristung,
+                verguetung = :verguetung,
+                wer_wir_sind = :wer_wir_sind,
+                das_erwartet_dich = :das_erwartet_dich,
+                aufgaben = :aufgaben,
+                anforderungen = :anforderungen,
+                leistungen = :leistungen,
+                ansprechperson_name = :ansprechperson_name,
+                ansprechperson_email = :ansprechperson_email,
+                status = :status,
+                aktualisiert_am = CURRENT_TIMESTAMP
+             WHERE id = :id'
+        );
+
+        $statement->execute($parameters);
+        return;
+    }
+
+    $statement = database()->prepare(
+        'INSERT INTO stellen (
+            titel,
+            kennziffer,
+            arbeitsort,
+            eintrittsdatum,
+            karrierestufe,
+            beschaeftigungsgrad,
+            befristung,
+            verguetung,
+            wer_wir_sind,
+            das_erwartet_dich,
+            aufgaben,
+            anforderungen,
+            leistungen,
+            ansprechperson_name,
+            ansprechperson_email,
+            status
+         ) VALUES (
+            :titel,
+            :kennziffer,
+            :arbeitsort,
+            :eintrittsdatum,
+            :karrierestufe,
+            :beschaeftigungsgrad,
+            :befristung,
+            :verguetung,
+            :wer_wir_sind,
+            :das_erwartet_dich,
+            :aufgaben,
+            :anforderungen,
+            :leistungen,
+            :ansprechperson_name,
+            :ansprechperson_email,
+            :status
+         )'
+    );
+
+    $statement->execute($parameters);
+}
