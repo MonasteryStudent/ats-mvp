@@ -183,3 +183,30 @@ function findStoredFilenamesForUser(
 
     return $statement->fetchAll(PDO::FETCH_COLUMN);
 }
+
+function findDocumentsForRecruiting(
+    int $applicationId
+): array {
+    $statement = database()->prepare(
+        "SELECT
+            id,
+            dokumenttyp,
+            originaldateiname
+         FROM dokumente
+         WHERE bewerbung_id = :bewerbung_id
+         ORDER BY
+            CASE dokumenttyp
+                WHEN 'lebenslauf' THEN 1
+                WHEN 'anschreiben' THEN 2
+                WHEN 'zeugnis' THEN 3
+                WHEN 'anlage' THEN 4
+                ELSE 5
+            END"
+    );
+
+    $statement->execute([
+        'bewerbung_id' => $applicationId,
+    ]);
+
+    return $statement->fetchAll();
+}

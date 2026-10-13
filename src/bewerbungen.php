@@ -296,3 +296,41 @@ function findSubmittedApplicationsForRecruiting(): array
 
     return $statement->fetchAll();
 }
+
+function findSubmittedApplicationById(
+    int $applicationId
+): ?array {
+    $statement = database()->prepare(
+        "SELECT
+            bewerbungen.id,
+            bewerbungen.status,
+            bewerbungen.eingereicht_am,
+            bewerbungen.fruehestmoegliches_eintrittsdatum,
+            bewerbungen.nachricht,
+            bewerbungen.bewertung,
+            bewerbungen.recruitingnotiz,
+            benutzerkonten.vorname,
+            benutzerkonten.nachname,
+            benutzerkonten.email,
+            benutzerkonten.telefon,
+            stellen.titel,
+            stellen.kennziffer
+         FROM bewerbungen
+         INNER JOIN benutzerkonten
+            ON benutzerkonten.id =
+                bewerbungen.benutzerkonto_id
+         INNER JOIN stellen
+            ON stellen.id = bewerbungen.stelle_id
+         WHERE bewerbungen.id = :id
+           AND bewerbungen.status <> 'entwurf'
+         LIMIT 1"
+    );
+
+    $statement->execute([
+        'id' => $applicationId,
+    ]);
+
+    $application = $statement->fetch();
+
+    return $application === false ? null : $application;
+}
