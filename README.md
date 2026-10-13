@@ -11,17 +11,18 @@ Minimum Viable Product eines Applicant-Tracking-Systems für ein fiktives Fitnes
 
 ## Projektstruktur
 
-```text
-ats-mvp/
-├── .htaccess           Beschränkung des Webzugriffs auf public/
-├── config/             Konfiguration und Datenbankverbindung
-├── database/           SQL-Schema und Beispieldaten
-├── public/             Öffentlich erreichbare PHP- und CSS-Dateien
-├── scripts/            Kommandozeilenskripte
-└── storage/            SQLite-Datenbank und hochgeladene Dateien
-```
+| Verzeichnis oder Datei | Aufgabe |
+|---|---|
+| `.htaccess` | Beschränkt den direkten Webzugriff auf `public/` und schützt `public/includes/`. |
+| `config/` | Enthält Konfiguration, Datenbankverbindung und gemeinsame Funktionen für Sitzungen, Zugriffsschutz, Uploads und Ausgabe. |
+| `database/` | Enthält das SQL-Schema und fiktive Beispieldaten. |
+| `public/` | Enthält die öffentlich aufrufbaren PHP-Endpunkte und CSS-Dateien. |
+| `src/` | Enthält Datenzugriffsfunktionen sowie die Validierung und Verarbeitung der Anwendungsfunktionen. |
+| `templates/` | Enthält die HTML-Vorlagen der dynamischen Seiten. |
+| `scripts/` | Enthält Kommandozeilenskripte zur Datenbankinitialisierung. |
+| `storage/` | Enthält die lokale SQLite-Datenbank und hochgeladene Bewerbungsunterlagen. |
 
-Die SQLite-Datenbank und hochgeladene Bewerbungsunterlagen liegen außerhalb von `public/`. Eine `.htaccess`-Datei verhindert in der lokalen XAMPP-Umgebung den direkten Webzugriff auf die übrigen Projektverzeichnisse.
+Die `.htaccess`-Datei beschränkt den direkten Webzugriff auf den öffentlichen Bereich. Die lokale SQLite-Datenbank und hochgeladene Bewerbungsunterlagen werden nicht mit Git versioniert.
 
 ## Lokale Einrichtung mit XAMPP
 
