@@ -210,3 +210,26 @@ function findDocumentsForRecruiting(
 
     return $statement->fetchAll();
 }
+
+function findSubmittedDocumentById(int $documentId): ?array
+{
+    $statement = database()->prepare(
+        "SELECT
+            dokumente.originaldateiname,
+            dokumente.speicherdateiname
+         FROM dokumente
+         INNER JOIN bewerbungen
+            ON bewerbungen.id = dokumente.bewerbung_id
+         WHERE dokumente.id = :id
+           AND bewerbungen.status <> 'entwurf'
+         LIMIT 1"
+    );
+
+    $statement->execute([
+        'id' => $documentId,
+    ]);
+
+    $document = $statement->fetch();
+
+    return $document === false ? null : $document;
+}
