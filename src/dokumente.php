@@ -108,3 +108,59 @@ function findStoredFilenamesForApplication(
 
     return $statement->fetchAll(PDO::FETCH_COLUMN);
 }
+
+function findOwnDraftDocument(
+    PDO $connection,
+    int $documentId,
+    int $userId,
+    int $jobId
+): ?array {
+    $statement = $connection->prepare(
+        'SELECT
+            d.id,
+            d.bewerbung_id,
+            d.speicherdateiname
+         FROM dokumente AS d
+         INNER JOIN bewerbungen AS b
+             ON b.id = d.bewerbung_id
+         WHERE d.id = :dokument_id
+           AND b.benutzerkonto_id = :benutzerkonto_id
+           AND b.stelle_id = :stelle_id
+           AND b.status = :status
+         LIMIT 1'
+    );
+
+    $statement->execute([
+        'dokument_id' => $documentId,
+        'benutzerkonto_id' => $userId,
+        'stelle_id' => $jobId,
+        'status' => 'entwurf',
+    ]);
+
+    $document = $statement->fetch();
+
+    return $document === false ? null : $document;
+}
+
+function deleteApplicationDocumentRecord(
+    PDO $connection,
+    int $documentId,
+    int $applicationId
+): void {
+    $statement = $connection->prepare(
+        'DELETE FROM dokumente
+         WHERE id = :dokument_id
+           AND bewerbung_id = :bewerbung_id'
+    );
+
+    $statement->execute([
+        'dokument_id' => $documentId,
+        'bewerbung_id' => $applicationId,
+    ]);
+
+    if ($statement->rowCount() !== 1) {
+        throw new RuntimeException(
+            'Das Dokument konnte nicht gelöscht werden.'
+        );
+    }
+}
