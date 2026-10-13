@@ -170,3 +170,47 @@ function saveJob(array $parameters, ?int $jobId = null): void
 
     $statement->execute($parameters);
 }
+
+function findJobForDeletion(int $jobId): ?array
+{
+    $statement = database()->prepare(
+        'SELECT
+            id,
+            titel,
+            kennziffer,
+            EXISTS (
+                SELECT 1
+                FROM bewerbungen
+                WHERE stelle_id = stellen.id
+            ) AS hat_bewerbungen
+         FROM stellen
+         WHERE id = :id'
+    );
+
+    $statement->execute([
+        'id' => $jobId,
+    ]);
+
+    $job = $statement->fetch();
+
+    return $job === false ? null : $job;
+}
+
+function deleteJobWithoutApplications(int $jobId): bool
+{
+    $statement = database()->prepare(
+        'DELETE FROM stellen
+         WHERE id = :id
+           AND NOT EXISTS (
+               SELECT 1
+               FROM bewerbungen
+               WHERE stelle_id = stellen.id
+           )'
+    );
+
+    $statement->execute([
+        'id' => $jobId,
+    ]);
+
+    return $statement->rowCount() === 1;
+}
