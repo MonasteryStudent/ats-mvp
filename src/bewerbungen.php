@@ -362,3 +362,52 @@ function updateApplicationReview(
         'id' => $applicationId,
     ]);
 }
+
+function findWithdrawnApplication(
+    PDO $connection,
+    int $applicationId
+): ?array {
+    $statement = $connection->prepare(
+        "SELECT
+            bewerbungen.id,
+            stellen.titel,
+            benutzerkonten.vorname,
+            benutzerkonten.nachname
+         FROM bewerbungen
+         INNER JOIN stellen
+            ON stellen.id = bewerbungen.stelle_id
+         INNER JOIN benutzerkonten
+            ON benutzerkonten.id = bewerbungen.benutzerkonto_id
+         WHERE bewerbungen.id = :id
+           AND bewerbungen.status = 'zurueckgezogen'"
+    );
+
+    $statement->execute([
+        'id' => $applicationId,
+    ]);
+
+    $application = $statement->fetch();
+
+    return $application === false ? null : $application;
+}
+
+function deleteWithdrawnApplication(
+    PDO $connection,
+    int $applicationId
+): void {
+    $statement = $connection->prepare(
+        "DELETE FROM bewerbungen
+         WHERE id = :id
+           AND status = 'zurueckgezogen'"
+    );
+
+    $statement->execute([
+        'id' => $applicationId,
+    ]);
+
+    if ($statement->rowCount() !== 1) {
+        throw new RuntimeException(
+            'Die Bewerbung konnte nicht gelöscht werden.'
+        );
+    }
+}
