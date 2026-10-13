@@ -127,3 +127,61 @@ function processRecruitingAccountCreation(array $input): array
         'technicalError' => $technicalError,
     ];
 }
+
+function processRecruitingAccountStatusChange(
+    array $input
+): array {
+    if (!isValidCsrfToken($input['csrf_token'] ?? null)) {
+        return [
+            'changed' => false,
+            'statusCode' => 403,
+            'error' => 'Die Anfrage ist abgelaufen oder ungültig.',
+            'result' => null,
+        ];
+    }
+
+    $accountId = filter_var(
+        $input['account_id'] ?? null,
+        FILTER_VALIDATE_INT
+    );
+
+    $requestedAction = (string) ($input['action'] ?? '');
+
+    $newStatus = match ($requestedAction) {
+        'activate' => 1,
+        'deactivate' => 0,
+        default => null,
+    };
+
+    if (
+        $accountId === false
+        || $accountId === null
+        || $accountId < 1
+        || $newStatus === null
+    ) {
+        return [
+            'changed' => false,
+            'statusCode' => 400,
+            'error' => 'Ungültige Anfrage.',
+            'result' => null,
+        ];
+    }
+
+    if (!updateRecruitingAccountStatus($accountId, $newStatus)) {
+        return [
+            'changed' => false,
+            'statusCode' => 404,
+            'error' => 'Das Recruitingkonto wurde nicht gefunden.',
+            'result' => null,
+        ];
+    }
+
+    return [
+        'changed' => true,
+        'statusCode' => 200,
+        'error' => null,
+        'result' => $newStatus === 1
+            ? 'activated'
+            : 'deactivated',
+    ];
+}

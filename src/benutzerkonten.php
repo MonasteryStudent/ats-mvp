@@ -352,3 +352,25 @@ function createRecruitingAccount(
         'ist_aktiv' => 1,
     ]);
 }
+
+function updateRecruitingAccountStatus(
+    int $accountId,
+    int $newStatus
+): bool {
+    $statement = database()->prepare(
+        'UPDATE benutzerkonten
+         SET
+            ist_aktiv = :ist_aktiv,
+            aktualisiert_am = CURRENT_TIMESTAMP
+         WHERE id = :id
+           AND rolle = :rolle'
+    );
+
+    $statement->execute([
+        'ist_aktiv' => $newStatus,
+        'id' => $accountId,
+        'rolle' => 'recruiting',
+    ]);
+
+    return $statement->rowCount() > 0;
+}
