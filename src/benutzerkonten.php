@@ -297,3 +297,58 @@ function deleteAccountWithPendingDeletionRequest(
         );
     }
 }
+
+function findRecruitingAccounts(): array
+{
+    $statement = database()->prepare(
+        'SELECT
+            id,
+            vorname,
+            nachname,
+            email,
+            ist_aktiv
+         FROM benutzerkonten
+         WHERE rolle = :rolle
+         ORDER BY nachname, vorname'
+    );
+
+    $statement->execute([
+        'rolle' => 'recruiting',
+    ]);
+
+    return $statement->fetchAll();
+}
+
+function createRecruitingAccount(
+    string $email,
+    string $passwordHash,
+    string $firstName,
+    string $lastName
+): void {
+    $statement = database()->prepare(
+        'INSERT INTO benutzerkonten (
+            email,
+            passwort_hash,
+            vorname,
+            nachname,
+            rolle,
+            ist_aktiv
+        ) VALUES (
+            :email,
+            :passwort_hash,
+            :vorname,
+            :nachname,
+            :rolle,
+            :ist_aktiv
+        )'
+    );
+
+    $statement->execute([
+        'email' => $email,
+        'passwort_hash' => $passwordHash,
+        'vorname' => $firstName,
+        'nachname' => $lastName,
+        'rolle' => 'recruiting',
+        'ist_aktiv' => 1,
+    ]);
+}
