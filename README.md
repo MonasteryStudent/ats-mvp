@@ -38,4 +38,6 @@ Die `.htaccess`-Datei beschränkt den direkten Webzugriff auf den öffentlichen 
 5. Apache über das XAMPP Control Panel starten.
 6. Im Browser `http://localhost/ats-mvp/public/` öffnen.
 
-Das Initialisierungsskript kann erneut ausgeführt werden. Bereits vorhandene Tabellen und Beispielstellen werden dabei nicht dupliziert.
+Das Skript erstellt das SQLite-Datenbankschema, drei fiktive Beispielstellen und das initiale Administratorkonto. Beim erstmaligen Anlegen des Administratorkontos wird ein zufälliges Passwort erzeugt und einmalig im Terminal ausgegeben. Die ausgegebenen Zugangsdaten werden für die Anmeldung im Adminbereich benötigt.
+
+Bei erneuter Ausführung werden vorhandene Beispielstellen und das Administratorkonto nicht dupliziert. Das bestehende Adminpasswort bleibt unverändert.
