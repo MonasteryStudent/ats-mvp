@@ -2,15 +2,13 @@
 
 declare(strict_types=1);
 
-require_once dirname(__DIR__) . '/config/database.php';
 require_once dirname(__DIR__) . '/config/auth.php';
-require_once dirname(__DIR__) . '/config/uploads.php';
 require_once dirname(__DIR__) . '/config/helpers.php';
-
 require_once dirname(__DIR__) . '/src/stellen.php';
 require_once dirname(__DIR__) . '/src/benutzerkonten.php';
 require_once dirname(__DIR__) . '/src/bewerbungen.php';
 require_once dirname(__DIR__) . '/src/dokumente.php';
+require_once dirname(__DIR__) . '/src/bewerbung-verarbeitung.php';
 
 $jobId = filter_input(
     INPUT_GET,
@@ -153,229 +151,30 @@ if (
             && ($application === null
                 || $application['status'] === 'entwurf')
         ) {
-            $earliestStartDate = trim(
-                (string) (
-                    $_POST[
-                        'fruehestmoegliches_eintrittsdatum'
-                    ] ?? ''
-                )
+            $result = processApplication(
+                $userId,
+                $jobId,
+                $application,
+                $documents,
+                $_POST
             );
 
-            $message = trim(
-                (string) ($_POST['nachricht'] ?? '')
-            );
+            $earliestStartDate = $result['earliestStartDate'];
+            $message = $result['message'];
+            $errors = $result['errors'];
 
-            if (!isValidCsrfToken($_POST['csrf_token'] ?? null)) {
-                $errors[] = (
-                    'Die Anfrage konnte nicht überprüft werden. '
-                    . 'Bitte lade die Seite neu.'
-                );
-            }
-
-            if (
-                !in_array(
-                    $formAction,
-                    ['save_draft', 'submit_application'],
-                    true
-                )
-            ) {
-                $errors[] = 'Die ausgewählte Aktion ist ungültig.';
-            }
-
-            if ($earliestStartDate === '') {
-                if ($submissionAttempted) {
-                    $errors[] = (
-                        'Das frühestmögliche Eintrittsdatum '
-                        . 'ist zum Einreichen erforderlich.'
-                    );
-                }
-            } else {
-                $date = DateTimeImmutable::createFromFormat(
-                    '!Y-m-d',
-                    $earliestStartDate
-                );
-
-                if (
-                    $date === false
-                    || $date->format('Y-m-d') !== $earliestStartDate
-                ) {
-                    $errors[] = (
-                        'Bitte gib ein gültiges Eintrittsdatum an.'
-                    );
-                }
-            }
-
-            if (strlen($message) > 2000) {
-                $errors[] = (
-                    'Die Nachricht darf höchstens '
-                    . '2000 Zeichen enthalten.'
-                );
-            }
-
-            if ($submissionAttempted) {
-                $existingDocumentTypes = array_column(
-                    $documents,
-                    'dokumenttyp'
-                );
-
-                $hasResume = (
-                    in_array('lebenslauf', $existingDocumentTypes, true)
-                    || uploadedFiles('lebenslauf') !== []
-                );
-
-                $hasCoverLetter = (
-                    in_array('anschreiben', $existingDocumentTypes, true)
-                    || uploadedFiles('anschreiben') !== []
-                );
-
-                if (!$hasResume) {
-                    $errors[] = (
-                        'Ein Lebenslauf ist zum Einreichen erforderlich.'
+            if ($result['saved']) {
+                if ($result['submitted']) {
+                    header('Location: konto.php?submitted=1');
+                } else {
+                    header(
+                        'Location: bewerbung.php?stelle_id='
+                        . $jobId
+                        . '&saved=draft'
                     );
                 }
 
-                if (!$hasCoverLetter) {
-                    $errors[] = (
-                        'Ein Anschreiben ist zum Einreichen erforderlich.'
-                    );
-                }
-            }
-
-            if ($errors === []) {
-                $connection = database();
-                $newStoredFiles = [];
-                $replacedStoredFiles = [];
-
-                $connection->beginTransaction();
-
-                try {
-                    $applicationId = saveApplicationDraft(
-                        $connection,
-                        $application === null ? null : (int) $application['id'],
-                        $userId,
-                        $jobId,
-                        $earliestStartDate,
-                        $message
-                    );
-
-                    $uploadFields = [
-                        'lebenslauf' => [
-                            'type' => 'lebenslauf',
-                            'label' => 'Lebenslauf',
-                            'replace' => true,
-                        ],
-                        'anschreiben' => [
-                            'type' => 'anschreiben',
-                            'label' => 'Anschreiben',
-                            'replace' => true,
-                        ],
-                        'zeugnisse' => [
-                            'type' => 'zeugnis',
-                            'label' => 'Zeugnis',
-                            'replace' => true,
-                        ],
-                        'anlagen' => [
-                            'type' => 'anlage',
-                            'label' => 'Weitere Anlage',
-                            'replace' => true,
-                        ],
-                    ];
-
-                    foreach ($uploadFields as $fieldName => $configuration) {
-                        foreach (uploadedFiles($fieldName) as $uploadedFile) {
-                            try {
-                                $storedFile = storeUploadedPdf(
-                                    $uploadedFile
-                                );
-                            } catch (UploadValidationException $exception) {
-                                throw new UploadValidationException(
-                                    $configuration['label']
-                                    . ': '
-                                    . $exception->getMessage()
-                                );
-                            }
-
-                            $newStoredFiles[] =
-                                $storedFile['speicherdateiname'];
-
-                            if ($configuration['replace']) {
-                                $oldFilenames = replaceApplicationDocumentRecords(
-                                    $connection,
-                                    $applicationId,
-                                    $configuration['type']
-                                );
-
-                                foreach ($oldFilenames as $storedFilename) {
-                                    $replacedStoredFiles[] = $storedFilename;
-                                }
-                            }
-                            insertApplicationDocument(
-                                $connection,
-                                $applicationId,
-                                $configuration['type'],
-                                $storedFile
-                            );
-                        }
-                    }
-
-                    if ($submissionAttempted) {
-                        submitApplication(
-                            $connection,
-                            $applicationId,
-                            $userId
-                        );
-                    }
-
-                    $connection->commit();
-
-                    foreach ($replacedStoredFiles as $storedFilename) {
-                        $path = UPLOAD_PATH . '/' . $storedFilename;
-
-                        if (is_file($path)) {
-                            unlink($path);
-                        }
-                    }
-
-                    if ($submissionAttempted) {
-                        header('Location: konto.php?submitted=1');
-                    } else {
-                        header(
-                            'Location: bewerbung.php?stelle_id='
-                            . $jobId
-                            . '&saved=draft'
-                        );
-                    }
-
-                    exit;
-                } catch (UploadValidationException $exception) {
-                    if ($connection->inTransaction()) {
-                        $connection->rollBack();
-                    }
-
-                    foreach ($newStoredFiles as $storedFilename) {
-                        $path = UPLOAD_PATH . '/' . $storedFilename;
-
-                        if (is_file($path)) {
-                            unlink($path);
-                        }
-                    }
-
-                    $errors[] = $exception->getMessage();
-                } catch (Throwable $exception) {
-                    if ($connection->inTransaction()) {
-                        $connection->rollBack();
-                    }
-
-                    foreach ($newStoredFiles as $storedFilename) {
-                        $path = UPLOAD_PATH . '/' . $storedFilename;
-
-                        if (is_file($path)) {
-                            unlink($path);
-                        }
-                    }
-
-                    throw $exception;
-                }
+                exit;
             }
         }
     } catch (Throwable $exception) {
