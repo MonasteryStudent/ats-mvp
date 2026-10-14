@@ -75,8 +75,7 @@ function processRegistration(array $input): array
 
     if (!$conditionsAccepted) {
         $errors[] = (
-            'Bitte akzeptiere die Nutzungsbedingungen '
-            . 'und bestätige die Datenschutzhinweise.'
+            'Bitte akzeptiere die Nutzungsbedingungen.'
         );
     }
 

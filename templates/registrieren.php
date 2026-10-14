@@ -121,24 +121,15 @@
                     required
                 >
                 <span>
-                    Ich habe die
-                    <a
-                        href="datenschutz.php"
-                        target="_blank"
-                        rel="noopener"
-                    >
-                        Datenschutzhinweise
-                    </a>
-                    zur Kenntnis genommen und akzeptiere die
-                    <a
-                        href="nutzungsbedingungen.php"
-                        target="_blank"
-                        rel="noopener"
-                    >
-                        Nutzungsbedingungen
-                    </a>.
+                    Ich akzeptiere die
+                    <a href="nutzungsbedingungen.php" target="_blank" rel="noopener">Nutzungsbedingungen</a>.
                 </span>
             </label>
+
+            <p>
+                Informationen zur Verarbeitung der Daten stehen in den
+                <a href="datenschutz.php" target="_blank" rel="noopener">Datenschutzhinweisen</a>.
+            </p>
 
             <button class="button" type="submit">
                 Konto anlegen
