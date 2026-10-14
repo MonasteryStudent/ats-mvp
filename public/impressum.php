@@ -15,13 +15,16 @@ require __DIR__ . '/includes/header.php';
     <h1>Impressum</h1>
 
     <section>
-        <h2>Hinweis zum Projekt</h2>
         <p>
-            Diese Website ist ein nicht kommerzielles Minimum Viable Product,
-            das im Rahmen eines Hochschulprojekts entwickelt wurde.
-            FiktivFit Studios ist ein fiktives Unternehmen. Die
-            dargestellten Stellenangebote dienen ausschließlich zu
-            Demonstrationszwecken.
+            Dieses Bewerbungsportal wurde im Rahmen eines Hochschulprojekts im 
+            Studiengang Informatik an der IU Internationalen Hochschule entwickelt. Es wird 
+            ausschließlich lokal zu Lehr- und Demonstrationszwecken betrieben.
+        </p>
+
+        <p>
+            FiktivFit Studios ist ein fiktives Unternehmen. Die dargestellten Stellenangebote, 
+            Unternehmensinformationen und Kontaktdaten sind Beispieldaten und beziehen 
+            sich auf keinen realen Anbieter.
         </p>
     </section>
 </main>

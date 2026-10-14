@@ -15,10 +15,9 @@ require __DIR__ . '/includes/header.php';
     <h1>Datenschutz</h1>
 
     <section>
-        <h2>Hinweis zum Projekt</h2>
         <p>
-            Diese Website ist ein lokal ausgeführtes Minimum Viable Product
-            für ein fiktives Applicant-Tracking-System. Sie dient
+            Das FiktivFit-Bewerbungsportal ist ein lokal betriebenes 
+            Hochschulprojekt für ein fiktives Fitnessunternehmen. Es dient
             ausschließlich zu Lehr- und Demonstrationszwecken. Für die
             Erprobung dürfen keine echten personenbezogenen Daten oder
             vertraulichen Dokumente verwendet werden.
