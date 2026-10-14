@@ -22,6 +22,14 @@ require __DIR__ . '/includes/header.php';
             Erprobung dürfen keine echten personenbezogenen Daten oder
             vertraulichen Dokumente verwendet werden.
         </p>
+
+        <p>
+            Das System speichert Kontodaten, Bewerbungsangaben und hochgeladene
+            Unterlagen zur Demonstration des Bewerbungsprozesses. Die Telefonnummer
+            ist optional. Bewerbende verwalten ausschließlich ihre eigenen Daten;
+            Recruiting bearbeitet eingereichte Bewerbungen. Der Admin verwaltet
+            Recruitingkonten. Die Speicherung erfolgt lokal.
+        </p>
     </section>
 </main>
 
